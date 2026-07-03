@@ -1,0 +1,6 @@
+{
+  "name": "Study Me",
+  "description": "A personalized, premium monochromatic study application for a tourism student and flight attendant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
