@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { CHAT_COACH_SYSTEM_PROMPT, toGeminiContents, type ChatCoachMessage } from "./src/lib/chatCoach";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -50,6 +51,41 @@ async function startServer() {
     } catch (error: any) {
       console.error(error);
       res.status(500).json({ error: error.message || "Failed to generate exam" });
+    }
+  });
+
+  app.post("/api/chat-coach", async (req, res) => {
+    try {
+      const { messages = [] } = req.body as { messages?: ChatCoachMessage[] };
+
+      if (!Array.isArray(messages)) {
+        return res.status(400).json({ error: "Messages must be an array" });
+      }
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: toGeminiContents(messages),
+        config: {
+          systemInstruction: CHAT_COACH_SYSTEM_PROMPT,
+        },
+      });
+
+      const replyText = response.text?.trim();
+      if (!replyText) {
+        throw new Error("Empty response from AI");
+      }
+
+      res.json({
+        reply: {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: replyText,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch (error: any) {
+      console.error(error);
+      res.status(500).json({ error: error.message || "Failed to generate chat response" });
     }
   });
 

@@ -7,6 +7,7 @@ import { Languages } from './components/Languages';
 import { Subjects } from './components/Subjects';
 import { Finance } from './components/Finance';
 import { Calendar } from './components/Calendar';
+import { ChatCoach } from './components/ChatCoach';
 
 export default function App() {
   const [currentModule, setCurrentModule] = useState<ModuleId>('dashboard');
@@ -21,6 +22,7 @@ export default function App() {
       {currentModule === 'subjects' && <Subjects onNavigate={setCurrentModule} />}
       {currentModule === 'finance' && <Finance onNavigate={setCurrentModule} />}
       {currentModule === 'calendar' && <Calendar onNavigate={setCurrentModule} />}
+      <ChatCoach currentModule={currentModule} />
     </div>
   );
 }
