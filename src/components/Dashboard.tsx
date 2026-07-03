@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Plane, Calendar, CheckCircle2, ChevronRight, BookOpen, Wallet, Globe, BookMarked, Activity, Focus, Play, Pause, RotateCcw, Bell, AlertCircle, Clock, Download, Upload, Settings, X } from 'lucide-react';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { Plane, Calendar, CheckCircle2, ChevronRight, BookOpen, Wallet, BookMarked, Activity, Focus, Play, Pause, RotateCcw, Bell, AlertCircle, Clock, Download, Upload, Settings, X } from 'lucide-react';
+import { type ChangeEvent, useState, useEffect, useMemo, useRef } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { aviationFacts } from '../data';
+import { getTodayEvents, getUpcomingEvents, loadCalendarEvents, type CalendarEvent } from '../lib/calendar';
 
-export type ModuleId = 'dashboard' | 'subjects' | 'tasks' | 'exams' | 'languages' | 'finance' | 'diary';
+export type ModuleId = 'dashboard' | 'subjects' | 'tasks' | 'exams' | 'languages' | 'finance' | 'diary' | 'calendar';
 
 type TaskType = 'assignment' | 'exam';
 type TaskStatus = 'todo' | 'in-progress' | 'completed';
@@ -98,6 +99,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   });
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
     const saved = localStorage.getItem('study-me-subjects');
@@ -108,6 +110,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         console.error("Failed to parse subjects", e);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    setCalendarEvents(loadCalendarEvents());
   }, []);
 
   const upcomingTasks = useMemo(() => {
@@ -150,6 +156,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
     return data;
   }, [subjects]);
+
+  const todayEvents = useMemo(() => getTodayEvents(calendarEvents), [calendarEvents]);
+  const upcomingCalendarEvents = useMemo(() => getUpcomingEvents(calendarEvents, new Date(), 3), [calendarEvents]);
 
   const [checkedIn, setCheckedIn] = useState(() => {
     const lastCheckIn = localStorage.getItem('study-me-last-checkin');
@@ -283,7 +292,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     URL.revokeObjectURL(url);
   };
 
-  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportData = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -560,7 +569,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 { id: 'subjects', title: "Subjects", desc: "Tourism & Aviation", icon: BookOpen },
                 { id: 'tasks', title: "Daily Tasks", desc: "Checklist", icon: Calendar },
                 { id: 'exams', title: "Mock Exams", desc: "Quiz Generator", icon: BookMarked },
-                { id: 'languages', title: "Languages", desc: "Study Cards", icon: Globe },
+                { id: 'calendar', title: "Calendar", desc: "Events & Notes", icon: Bell },
                 { id: 'finance', title: "Finance", desc: "Layover Budget", icon: Wallet },
                 { id: 'diary', title: "Diary", desc: "Personal Notes", icon: Plane },
               ].map((item, idx) => (
@@ -581,6 +590,66 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 </motion.div>
               ))}
            </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.33, ease: "easeOut" }}
+          className="col-span-1 md:col-span-3 mt-8 border border-neutral-200 p-8 bg-white shadow-sm group hover:border-black hover:shadow-lg transition-all duration-500"
+        >
+          <div className="flex items-center justify-between mb-8 border-b border-neutral-100 pb-4">
+            <div>
+              <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 group-hover:text-black transition-colors duration-500">
+                Calendar Summary
+              </h2>
+              <p className="text-sm text-neutral-500 mt-2">Today&apos;s reminders and the next important dates.</p>
+            </div>
+            <button
+              onClick={() => onNavigate('calendar')}
+              className="text-sm font-semibold text-neutral-500 hover:text-black transition-colors"
+            >
+              Open Calendar
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border border-neutral-200 p-5 bg-neutral-50">
+              <h3 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 mb-4">Today</h3>
+              {todayEvents.length === 0 ? (
+                <p className="text-sm text-neutral-500">No events today.</p>
+              ) : (
+                <div className="space-y-3">
+                  {todayEvents.slice(0, 3).map((event) => (
+                    <div key={event.id} className="border border-neutral-200 bg-white p-4">
+                      <div className="text-sm font-semibold">{event.title}</div>
+                      <div className="text-xs text-neutral-500 mt-1">{event.time} · {event.type}</div>
+                      {event.note && <p className="text-sm text-neutral-500 mt-2">{event.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="border border-neutral-200 p-5 bg-white">
+              <h3 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 mb-4">Upcoming</h3>
+              {upcomingCalendarEvents.length === 0 ? (
+                <p className="text-sm text-neutral-500">No upcoming events.</p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingCalendarEvents.map((event) => (
+                    <div key={event.id} className="flex items-start justify-between gap-4 border-b border-neutral-200 pb-3 last:border-b-0">
+                      <div>
+                        <div className="text-sm font-semibold">{event.title}</div>
+                        <div className="text-xs text-neutral-500 mt-1">{event.date}</div>
+                      </div>
+                      <div className="text-xs font-medium text-neutral-500">{event.time}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </motion.div>
 
         {/* Upcoming Notifications */}
