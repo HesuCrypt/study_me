@@ -2,7 +2,7 @@
 
 ## Summary
 
-Upgrade the Study Coach so it works well on any screen size while also gaining a dedicated full chatbot page. The final experience should keep the current floating coach available across the app for quick access, but introduce a larger chatbot dashboard for longer conversations, clearer reading, and better action review.
+Upgrade the Study Coach so it feels like a first-class app module while also keeping the floating coach available for quick access. The final experience should add a dedicated chatbot page that visually fits the rest of the app, especially the Exams module style, and should expose that page from a proper dashboard card instead of a small header button.
 
 Both chat surfaces should share the same conversation history, selected mode, suggestion state, and persistence behavior so users can move between the floating coach and the full page without losing context.
 
@@ -10,10 +10,11 @@ Both chat surfaces should share the same conversation history, selected mode, su
 
 - Keep the floating chatbot available across the app.
 - Add a dedicated chatbot module/page to the main app navigation.
-- Make the chatbot experience responsive across mobile, tablet, and desktop.
+- Add a proper `Study Coach` dashboard card near the `Diary` card.
 - Share the same chat history and mode between the floating coach and the dedicated page.
 - Preserve the current review-first workflow for AI-suggested task and calendar actions.
-- Maintain the existing premium glassmorphism visual style while improving reading comfort and layout resilience.
+- Keep the floating chatbot available globally without making mobile-specific shell behavior the main design focus.
+- Make the dedicated chatbot page feel closer to existing module pages such as Exams.
 
 ## Non-Goals
 
@@ -28,7 +29,9 @@ Both chat surfaces should share the same conversation history, selected mode, su
 - The floating chatbot should remain available.
 - A dedicated chatbot dashboard should be added.
 - Both views should share the same history and state.
-- The responsive experience should be optimized for any screen size instead of only desktop floating-panel usage.
+- The top header button for chatbot entry should be removed.
+- The chatbot should be entered from a proper dashboard card placed near `Diary`.
+- The dedicated chatbot page should use a cleaner card/module layout similar to `ExamCreator`.
 
 ## Architecture
 
@@ -61,38 +64,45 @@ This means:
 
 - extend `ModuleId` with a chatbot route, such as `chat`
 - add a new module component for the dedicated chatbot page
-- wire dashboard navigation so users can enter the full chatbot page intentionally
+- wire dashboard navigation so users can enter the full chatbot page from a real dashboard card
 - keep the floating coach mounted globally in `App.tsx`
+- remove the temporary top header CTA button for chatbot entry
 
-## Responsive UX Model
+## UX Direction
 
-### Mobile
+### Dashboard Entry
 
-On small screens, the floating chatbot should behave more like a bottom sheet or near-fullscreen modal instead of a narrow desktop-sized floating card. The goal is to avoid cramped message layout, clipped content, and awkward keyboard overlap.
+The dashboard should expose the chatbot the same way other modules are exposed: as a proper module card in the main feature grid. The current top header button should be removed entirely.
 
-The dedicated chatbot page should use a stacked mobile-first layout:
+Requirements:
 
-- full-width message area
-- sticky input area
-- compact mode controls
-- action review components integrated without crowding the message stream
+- add a `Study Coach` card to the module grid
+- place it close to `Diary` so it reads as a peer module
+- match the existing dashboard card language and interactions
+- route the card to the dedicated chatbot page
 
-### Tablet
+### Floating Coach
 
-On tablet widths, the floating chatbot can remain overlay-based but should use a wider, taller sheet with safer spacing and more usable message width.
+The floating coach remains available everywhere as the quick-access assistant.
 
-The dedicated chatbot page can remain mostly single-column, but with more generous spacing and stronger visual hierarchy than mobile.
+Requirements:
 
-### Desktop
+- keep the launcher globally visible
+- keep compact quick-chat behavior
+- keep `Open Full Coach` as a path into the dedicated chatbot page
+- avoid making special mobile-only shell behavior the centerpiece of the feature
 
-On desktop, the floating coach can remain a compact premium assistant panel for quick prompts.
+### Dedicated Chat Page
 
-The dedicated chatbot page should become the premium “cockpit” experience:
+The dedicated chatbot page should look and feel like a real app module, not a stretched floating widget and not a special mobile sheet.
 
-- larger conversation area
-- better reading width
-- clear sectioning for header, chat stream, quick prompts, and review actions
-- stronger dashboard feel than the floating widget
+The target reference is closer to `ExamCreator` than to an overlay:
+
+- clear module header with back navigation
+- page title and subtitle
+- main chat card for the conversation area
+- optional secondary info/support card beside or below it
+- structured spacing and surfaces consistent with the app's module pages
 
 ## Component Design
 
@@ -112,28 +122,28 @@ This layer should be reusable by both the floating and dedicated surfaces withou
 
 ### Floating Chat Surface
 
-The floating coach should become a responsive shell around the shared chat content.
+The floating coach should remain a compact global shell around the shared chat content.
 
 Expected behavior:
 
 - launcher remains globally visible
 - desktop uses a compact floating panel
-- mobile uses a larger sheet-style presentation
 - include an explicit action such as `Open Full Coach` to move into the dedicated chatbot page
 
 ### Dedicated Chat Dashboard
 
-Add a new chatbot page component that presents the same shared conversation in a larger layout.
+Add a new chatbot page component that presents the same shared conversation in a card-based module layout.
 
 Recommended page sections:
 
-- page header with title, subtitle, and back/navigation affordance
-- mode switcher in a clearly visible but lightweight position
-- primary message column with stable scrolling
-- quick prompt row or panel
-- action review area that feels integrated rather than cramped
+- module header with title, subtitle, and back/navigation affordance
+- primary chat card with stable scrolling and message input
+- mode switcher integrated into the main chat card
+- quick prompt row inside the main card
+- action review area that feels integrated into the card instead of floating separately
+- optional secondary support/info card that complements the main conversation area
 
-The dedicated page should feel like a real module, not just the floating widget stretched larger.
+The dedicated page should feel like a real module page in the system, similar in presentation quality to Exams.
 
 ## Data And Logic
 
@@ -151,11 +161,11 @@ The main behavioral change is state reuse across two UI surfaces.
 Recommended logic split:
 
 - shared hook or controller for chat behavior and persistence
-- reusable presentational chat panel/body
+- reusable presentational chat panel/body where helpful
 - floating shell component
 - dedicated page component
 
-This keeps boundaries clear and avoids turning `ChatCoach.tsx` into an oversized multi-layout file.
+This keeps boundaries clear and avoids turning `ChatCoach.tsx` into an oversized multi-layout file while still allowing the dedicated page to have its own module-style structure.
 
 ## Navigation
 
@@ -163,10 +173,10 @@ The dedicated chatbot page should be reachable from at least one explicit app su
 
 Recommended entry points:
 
-- dashboard card or CTA for Study Coach
+- dashboard `Study Coach` module card
 - button inside the floating chatbot such as `Open Full Coach`
 
-This ensures users can discover the full chatbot dashboard naturally without removing the convenience of the global launcher.
+The top dashboard header button should not be used as a chatbot entry point.
 
 ## Error Handling
 
@@ -185,12 +195,14 @@ Add focused coverage around:
 - shared chat history between floating and dedicated views
 - preserving selected mode across both surfaces
 - navigation into the dedicated chatbot page
-- responsive shell behavior at meaningful breakpoints where practical
+- navigation from the new `Study Coach` dashboard card
+- absence of the removed top header CTA
 - keeping action review and suggestion rendering functional in both surfaces
 
-Testing does not need to simulate every CSS breakpoint perfectly, but should protect the structural behaviors:
+Testing should protect the structural behaviors:
 
 - the dedicated chatbot page renders from app navigation
+- the dedicated chatbot page opens from the dashboard card near the module grid
 - floating and dedicated views read from the same persisted chat history
 - moving between views does not reset the conversation
 
@@ -202,11 +214,11 @@ Mitigation:
 
 - centralize chat behavior in one reusable layer before building the second surface
 
-### Risk: Responsive Layout Becomes Hard To Maintain
+### Risk: Dedicated Entry Feels Inconsistent With Other Modules
 
 Mitigation:
 
-- separate the floating shell from the dedicated page shell instead of stuffing many breakpoint branches into one component
+- remove the header CTA and use the same dashboard card language as the rest of the modules
 
 ### Risk: Dedicated Page Feels Like A Stretched Widget
 
@@ -228,4 +240,5 @@ Mitigation:
 - Create one dedicated chatbot page component under `src/components/`
 - Create or extract shared chatbot logic/components under `src/components/chat-coach/` and/or `src/lib/`
 - Update `src/components/ChatCoach.test.tsx`
+- Update the dashboard module grid to include `Study Coach` near `Diary`
 - Add focused tests for the dedicated chatbot page and shared state behavior where needed
