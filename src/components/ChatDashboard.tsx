@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { ArrowLeft, MessageCircle, Send, Sparkles } from 'lucide-react';
 import type { ModuleId } from './Dashboard';
 import { ActionCard } from './chat-coach/ActionCard';
@@ -47,32 +48,47 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(15,23,42,0.08),transparent_50%),#ffffff] px-4 py-6 text-black sm:px-6 lg:px-10">
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={() => onNavigate('dashboard')}
-            className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Flight Deck
-          </button>
-          <div className="hidden items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-medium text-neutral-500 shadow-sm sm:inline-flex">
-            <MessageCircle className="h-4 w-4" />
-            Shared with floating coach
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 min-h-screen flex flex-col">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-12"
+      >
+        <button
+          type="button"
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Flight Deck
+        </button>
+        <div className="flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-neutral-400">
+          <MessageCircle className="w-4 h-4" />
+          Study Coach Module
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-1 flex flex-col"
+      >
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Study Coach</h1>
+            <p className="text-neutral-500">Your AI briefing space for study planning, focus, and review.</p>
           </div>
         </div>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.8fr)]">
-          <div className="overflow-hidden rounded-[32px] border border-slate-900/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.84))] text-white shadow-[0_30px_90px_rgba(0,0,0,0.18)]">
-            <header className="border-b border-white/10 px-5 py-5 md:px-8">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">Study Coach</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Study Coach Cockpit</h1>
-              <p className="mt-3 max-w-2xl text-sm text-white/70 md:text-base">
-                A full briefing space for study planning, focus, and action review across any screen size.
+        <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_20rem] gap-6">
+          <div className="overflow-hidden border border-neutral-200 bg-white shadow-sm">
+            <header className="border-b border-neutral-200 px-5 py-5 md:px-8">
+              <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Study Coach</p>
+              <h2 className="mt-3 text-2xl md:text-3xl font-semibold tracking-tight">Coach Cockpit</h2>
+              <p className="mt-3 max-w-2xl text-sm text-neutral-500 md:text-base">
+                Continue your shared conversation with more room for planning, focus, and review.
               </p>
-              <div className="mt-4">
+              <div className="mt-4 inline-block rounded-full bg-slate-900 px-3 py-2 text-white">
                 <ModeSwitcher
                   activeMode={activeController.mode}
                   recommendedMode={activeController.recommendedMode}
@@ -83,10 +99,10 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
 
             <div
               ref={scrollContainerRef}
-              className="max-h-[min(64vh,34rem)] space-y-3 overflow-y-auto px-5 py-5 md:px-8"
+              className="max-h-[min(64vh,34rem)] space-y-3 overflow-y-auto bg-neutral-50 px-5 py-5 md:px-8"
             >
               {activeController.messages.length === 0 && (
-                <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/80">
+                <div className="rounded-3xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600">
                   Captain, welcome aboard. Tell me what you need help studying today.
                 </div>
               )}
@@ -96,8 +112,8 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
                   key={message.id}
                   className={
                     message.role === 'user'
-                      ? 'ml-auto max-w-[85%] rounded-3xl bg-white px-4 py-3 text-sm text-black'
-                      : 'max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                      ? 'ml-auto max-w-[85%] rounded-3xl bg-black px-4 py-3 text-sm text-white'
+                      : 'max-w-[85%] rounded-3xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700'
                   }
                 >
                   {message.content}
@@ -112,7 +128,7 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
               )}
 
               {activeController.isSending && (
-                <div className="max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white/70">
+                <div className="max-w-[85%] rounded-3xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-500">
                   Preparing your next instruction...
                 </div>
               )}
@@ -120,7 +136,7 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
               <div ref={bottomAnchorRef} aria-hidden="true" className="h-px w-full" />
             </div>
 
-            <div className="border-t border-white/10 px-5 py-5 md:px-8">
+            <div className="border-t border-neutral-200 bg-white px-5 py-5 md:px-8">
               {activeController.reviewAction && (
                 <div className="mb-4">
                   <ConfirmationSheet
@@ -137,7 +153,7 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
                     key={prompt}
                     type="button"
                     onClick={() => void activeController.sendMessage(prompt)}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white/85"
+                    className="rounded-full border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700"
                     aria-label={prompt}
                   >
                     <span className="inline-flex items-center gap-2">
@@ -159,13 +175,13 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
                   onChange={(event) => activeController.setInput(event.target.value)}
                   placeholder="Ask for motivation, a study plan, or a calendar suggestion."
                   rows={2}
-                  className="min-h-[84px] flex-1 resize-none rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/55"
+                  className="min-h-[84px] flex-1 resize-none border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-black outline-none placeholder:text-neutral-400"
                 />
                 <button
                   type="submit"
                   aria-label="Send Message"
                   disabled={activeController.isSending}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black disabled:opacity-50"
+                  className="flex h-12 w-12 items-center justify-center bg-black text-white disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -173,24 +189,24 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
             </div>
           </div>
 
-          <aside className="rounded-[32px] border border-black/8 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
-              <MessageCircle className="h-5 w-5" />
+          <aside className="border border-neutral-200 bg-neutral-50 p-6 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white">
+              <MessageCircle className="w-5 h-5" />
             </div>
             <h2 className="mt-4 text-xl font-semibold tracking-tight">Coach Overview</h2>
             <p className="mt-3 text-sm leading-6 text-neutral-500">
               Continue your shared conversation here with more room for reading, planning, and action review.
             </p>
             <div className="mt-6 space-y-3 text-sm text-neutral-600">
-              <div className="rounded-2xl bg-neutral-50 p-4">Shared history stays synced with the floating coach.</div>
-              <div className="rounded-2xl bg-neutral-50 p-4">Mode changes apply everywhere.</div>
-              <div className="rounded-2xl bg-neutral-50 p-4">
+              <div className="border border-neutral-200 bg-white p-4">Shared history stays synced with the floating coach.</div>
+              <div className="border border-neutral-200 bg-white p-4">Mode changes apply everywhere.</div>
+              <div className="border border-neutral-200 bg-white p-4">
                 Task and calendar suggestions still require confirmation before saving.
               </div>
             </div>
           </aside>
         </section>
-      </div>
+      </motion.div>
     </div>
   );
 }

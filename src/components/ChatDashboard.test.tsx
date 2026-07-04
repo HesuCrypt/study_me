@@ -28,7 +28,7 @@ describe('ChatDashboard', () => {
     await user.click(screen.getByRole('button', { name: /open study coach/i }));
     await user.click(screen.getByRole('button', { name: /open full coach/i }));
 
-    expect(await screen.findByRole('heading', { name: /study coach cockpit/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^study coach$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open study coach/i })).toBeInTheDocument();
   });
 
@@ -70,14 +70,20 @@ describe('ChatDashboard', () => {
     });
   });
 
-  it('opens the chatbot dashboard from a dashboard entry point', async () => {
+  it('opens the chatbot dashboard from the new Study Coach module card', async () => {
     const user = userEvent.setup();
 
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /open coach cockpit/i }));
+    await user.click(screen.getByText(/^Study Coach$/i));
 
-    expect(await screen.findByRole('heading', { name: /study coach cockpit/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^study coach$/i })).toBeInTheDocument();
+  });
+
+  it('does not render the removed open coach cockpit header button on the dashboard', () => {
+    render(<App />);
+
+    expect(screen.queryByRole('button', { name: /open coach cockpit/i })).not.toBeInTheDocument();
   });
 
   it('sends a message from the dedicated chatbot page and renders the assistant reply', async () => {
@@ -98,10 +104,21 @@ describe('ChatDashboard', () => {
 
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /open coach cockpit/i }));
+    await user.click(screen.getByText(/^Study Coach$/i));
     await user.type(screen.getByLabelText(/message study coach/i), 'Plan my review tonight');
     await user.click(screen.getByRole('button', { name: /send message/i }));
 
     expect(await screen.findByText(/Let us map your evening study block, captain./i)).toBeInTheDocument();
+  });
+
+  it('renders the chatbot page as a module-style layout with a main chat card and support card', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByText(/^Study Coach$/i));
+
+    expect(await screen.findByText(/study coach module/i)).toBeInTheDocument();
+    expect(screen.getByText(/coach overview/i)).toBeInTheDocument();
   });
 });

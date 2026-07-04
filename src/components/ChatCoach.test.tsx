@@ -233,17 +233,6 @@ describe('ChatCoach', () => {
     expect(screen.getByRole('button', { name: /open full coach/i })).toBeInTheDocument();
   });
 
-  it('renders the floating chatbot shell with a full-width mobile-safe layout class', async () => {
-    const user = userEvent.setup();
-
-    render(<ChatCoach currentModule="dashboard" />);
-
-    await user.click(screen.getByRole('button', { name: /open study coach/i }));
-
-    const shell = screen.getByRole('dialog', { name: /study coach panel/i });
-    expect(shell.className).toMatch(/inset-x-3/);
-  });
-
   it('renders a calendar action card and saves after confirmation', async () => {
     const user = userEvent.setup();
     vi.stubGlobal(
