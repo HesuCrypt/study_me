@@ -8,9 +8,12 @@ import { Subjects } from './components/Subjects';
 import { Finance } from './components/Finance';
 import { Calendar } from './components/Calendar';
 import { ChatCoach } from './components/ChatCoach';
+import { ChatDashboard } from './components/ChatDashboard';
+import { useChatCoachController } from './components/chat-coach/useChatCoachController';
 
 export default function App() {
   const [currentModule, setCurrentModule] = useState<ModuleId>('dashboard');
+  const chatController = useChatCoachController(currentModule);
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
@@ -22,7 +25,18 @@ export default function App() {
       {currentModule === 'subjects' && <Subjects onNavigate={setCurrentModule} />}
       {currentModule === 'finance' && <Finance onNavigate={setCurrentModule} />}
       {currentModule === 'calendar' && <Calendar onNavigate={setCurrentModule} />}
-      <ChatCoach currentModule={currentModule} />
+      {currentModule === 'chat' && (
+        <ChatDashboard
+          onNavigate={setCurrentModule}
+          currentModule={currentModule}
+          controller={chatController}
+        />
+      )}
+      <ChatCoach
+        currentModule={currentModule}
+        onOpenFullCoach={() => setCurrentModule('chat')}
+        controller={chatController}
+      />
     </div>
   );
 }

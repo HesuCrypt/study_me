@@ -5,7 +5,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { aviationFacts } from '../data';
 import { getTodayEvents, getUpcomingEvents, loadCalendarEvents, type CalendarEvent } from '../lib/calendar';
 
-export type ModuleId = 'dashboard' | 'subjects' | 'tasks' | 'exams' | 'languages' | 'finance' | 'diary' | 'calendar';
+export type ModuleId = 'dashboard' | 'subjects' | 'tasks' | 'exams' | 'languages' | 'finance' | 'diary' | 'calendar' | 'chat';
 
 type TaskType = 'assignment' | 'exam';
 type TaskStatus = 'todo' | 'in-progress' | 'completed';
@@ -401,6 +401,14 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => onNavigate('chat')}
+            className="inline-flex h-14 items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 text-sm font-semibold text-black shadow-sm transition-all hover:-translate-y-1 hover:border-black hover:shadow-lg"
+          >
+            <Plane className="h-4 w-4" />
+            Open Coach Cockpit
+          </button>
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="w-14 h-14 bg-white border border-neutral-200 text-black rounded-full flex items-center justify-center hover:bg-neutral-50 hover:border-black hover:-translate-y-1 transition-all group shadow-sm hover:shadow-lg"

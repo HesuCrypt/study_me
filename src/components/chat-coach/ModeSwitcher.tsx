@@ -21,6 +21,7 @@ export function ModeSwitcher({ activeMode, recommendedMode, onChange }: ModeSwit
             key={mode}
             type="button"
             onClick={() => onChange(mode)}
+            aria-pressed={activeMode === mode}
             className={`rounded-full px-3 py-2 text-xs font-medium transition ${
               activeMode === mode ? 'bg-white text-black' : 'text-white/80'
             }`}
