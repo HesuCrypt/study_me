@@ -5,6 +5,7 @@ import type { ModuleId } from './Dashboard';
 import { ActionCard } from './chat-coach/ActionCard';
 import { ConfirmationSheet } from './chat-coach/ConfirmationSheet';
 import { ModeSwitcher } from './chat-coach/ModeSwitcher';
+import { buildApiUrl, parseApiJson } from '../lib/api';
 import { loadCalendarEvents, saveCalendarEvents } from '../lib/calendar';
 import {
   CHAT_COACH_QUICK_PROMPTS,
@@ -161,7 +162,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
     setIsSending(true);
 
     try {
-      const response = await fetch('/api/chat-coach', {
+      const response = await fetch(buildApiUrl('/api/chat-coach'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: nextHistory, mode, currentModule }),
@@ -171,7 +172,10 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
         throw new Error('Request failed');
       }
 
-      const data = (await response.json()) as ChatCoachResponse;
+      const data = await parseApiJson<ChatCoachResponse>(
+        response,
+        'The study coach service is unavailable right now.'
+      );
       setMessages((current) => trimChatCoachHistory([...current, data.reply]));
       setSuggestedAction(
         isTaskActionSuggestion(data.suggestedAction) || isCalendarActionSuggestion(data.suggestedAction)
@@ -245,9 +249,9 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            className="fixed bottom-24 right-6 z-50 w-[min(27rem,calc(100vw-2rem))] overflow-hidden rounded-[32px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] text-white shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl"
+            className="fixed bottom-24 right-6 z-50 w-[min(27rem,calc(100vw-2rem))] overflow-hidden rounded-[32px] border border-slate-900/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(15,23,42,0.76))] text-white shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl"
           >
-            <div className="border-b border-white/15 px-5 py-5">
+            <div className="border-b border-white/10 px-5 py-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.32em] text-white/60">Study Coach</p>
@@ -258,7 +262,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="Close Study Coach"
-                  className="rounded-full border border-white/15 bg-white/5 p-2 text-white/80"
+                  className="rounded-full border border-white/15 bg-white/10 p-2 text-white/80"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -271,7 +275,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
 
             <div className="max-h-80 space-y-3 overflow-y-auto px-5 py-4">
               {messages.length === 0 && (
-                <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/80">
+                <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/85">
                   Captain, welcome aboard. Tell me what you need help studying today.
                 </div>
               )}
@@ -282,7 +286,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   className={
                     message.role === 'user'
                       ? 'ml-auto max-w-[85%] rounded-3xl bg-white px-4 py-3 text-sm text-black'
-                      : 'max-w-[85%] rounded-3xl bg-white/10 px-4 py-3 text-sm text-white'
+                      : 'max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                   }
                 >
                   {message.content}
@@ -292,14 +296,14 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
               {suggestedAction && <ActionCard action={suggestedAction} onReview={() => setReviewAction(suggestedAction)} />}
 
               {isSending && (
-                <div className="max-w-[85%] rounded-3xl bg-white/10 px-4 py-3 text-sm text-white/60">
+                <div className="max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white/70">
                   Preparing your next instruction...
                 </div>
               )}
 
             </div>
 
-            <div className="border-t border-white/15 px-5 py-4">
+            <div className="border-t border-white/10 px-5 py-4">
               {reviewAction && (
                 <div className="mb-4">
                   <ConfirmationSheet
@@ -316,7 +320,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                     key={prompt}
                     type="button"
                     onClick={() => void sendMessage(prompt)}
-                    className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-white/80"
+                    className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white/85"
                     aria-label={prompt}
                   >
                     <span className="inline-flex items-center gap-2">
@@ -338,7 +342,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   onChange={(event) => setInput(event.target.value)}
                   placeholder="Ask for motivation, a study plan, or a calendar suggestion."
                   rows={2}
-                  className="min-h-[76px] flex-1 resize-none rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
+                  className="min-h-[76px] flex-1 resize-none rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/55"
                 />
                 <button
                   type="submit"

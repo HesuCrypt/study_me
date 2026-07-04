@@ -4,6 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { ChatCoach } from './ChatCoach';
 
+const createJsonResponse = (payload: unknown, ok = true) => ({
+  ok,
+  text: async () => JSON.stringify(payload),
+  headers: {
+    get: (name: string) => (name.toLowerCase() === 'content-type' ? 'application/json; charset=utf-8' : null),
+  },
+});
+
 describe('ChatCoach', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -12,17 +20,16 @@ describe('ChatCoach', () => {
 
   it('opens from the launcher, sends a quick prompt, and renders the assistant reply', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
         reply: {
           id: 'assistant-1',
           role: 'assistant',
           content: 'Captain, start with 20 minutes on your reviewer and report back.',
           createdAt: '2026-07-03T12:01:00.000Z',
         },
-      }),
-    });
+      })
+    );
 
     vi.stubGlobal('fetch', fetchMock);
 
@@ -58,17 +65,16 @@ describe('ChatCoach', () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
           reply: {
             id: 'assistant-2',
             role: 'assistant',
             content: 'What should we review next, captain?',
             createdAt: '2026-07-03T12:02:00.000Z',
           },
-        }),
-      })
+        })
+      )
     );
 
     render(<App />);
@@ -87,17 +93,16 @@ describe('ChatCoach', () => {
 
   it('persists the selected mode and sends it with the chat request', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
         reply: {
           id: 'assistant-3',
           role: 'assistant',
           content: 'Let us move with strict precision, captain.',
           createdAt: '2026-07-03T12:03:00.000Z',
         },
-      }),
-    });
+      })
+    );
 
     vi.stubGlobal('fetch', fetchMock);
 
@@ -121,9 +126,8 @@ describe('ChatCoach', () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
           reply: {
             id: 'assistant-4',
             role: 'assistant',
@@ -135,8 +139,8 @@ describe('ChatCoach', () => {
             label: 'Add to Tasks',
             taskText: 'Review emergency equipment checks',
           },
-        }),
-      })
+        })
+      )
     );
 
     render(<ChatCoach currentModule="tasks" />);
@@ -155,9 +159,8 @@ describe('ChatCoach', () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
           reply: {
             id: 'assistant-5',
             role: 'assistant',
@@ -175,8 +178,8 @@ describe('ChatCoach', () => {
               note: 'Cabin procedures',
             },
           },
-        }),
-      })
+        })
+      )
     );
 
     render(<ChatCoach currentModule="calendar" />);
@@ -195,9 +198,8 @@ describe('ChatCoach', () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
           reply: {
             id: 'assistant-6',
             role: 'assistant',
@@ -208,8 +210,8 @@ describe('ChatCoach', () => {
             kind: 'task',
             label: 'Add to Tasks',
           },
-        }),
-      })
+        })
+      )
     );
 
     render(<ChatCoach currentModule="dashboard" />);

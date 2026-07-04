@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Plus, Trash2, Edit2, Play, Check, X, BookMarked, Save, Sparkles } from 'lucide-react';
 import { ModuleId } from './Dashboard';
+import { buildApiUrl, parseApiJson } from '../lib/api';
 
 interface Question {
   id: string;
@@ -15,6 +16,16 @@ interface Exam {
   title: string;
   questions: Question[];
   lastScore?: number;
+}
+
+interface GenerateExamResponse {
+  title: string;
+  questions: Array<{
+    question: string;
+    answer: string;
+    options?: string[];
+  }>;
+  error?: string;
 }
 
 interface ExamCreatorProps {
@@ -70,7 +81,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
     setGenerateError('');
     
     try {
-      const response = await fetch('/api/generate-exam', {
+      const response = await fetch(buildApiUrl('/api/generate-exam'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -79,8 +90,10 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
           difficulty: generateDifficulty 
         })
       });
-      
-      const data = await response.json();
+      const data = await parseApiJson<GenerateExamResponse>(
+        response,
+        'The exam service is unavailable right now. Check the deployed API URL.'
+      );
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate exam');
@@ -101,7 +114,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
       setView('list');
       setGenerateTopic('');
     } catch (error: any) {
-      setGenerateError(error.message);
+      setGenerateError(error instanceof Error ? error.message : 'Failed to generate exam');
     } finally {
       setIsGenerating(false);
     }
@@ -479,4 +492,3 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
     </div>
   );
 }
-
