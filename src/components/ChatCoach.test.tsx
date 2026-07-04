@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { ChatCoach } from './ChatCoach';
+import { buildApiUrl } from '../lib/api';
+
+const scrollIntoViewMock = vi.fn();
 
 const createJsonResponse = (payload: unknown, ok = true) => ({
   ok,
@@ -16,6 +19,11 @@ describe('ChatCoach', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoViewMock,
+    });
+    scrollIntoViewMock.mockClear();
   });
 
   it('opens from the launcher, sends a quick prompt, and renders the assistant reply', async () => {
@@ -40,7 +48,7 @@ describe('ChatCoach', () => {
 
     expect(await screen.findByText(/Captain, start with 20 minutes/i)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/chat-coach',
+      buildApiUrl('/api/chat-coach'),
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,11 +123,71 @@ describe('ChatCoach', () => {
 
     expect(localStorage.getItem('study-me-chat-coach-mode')).toBe('strict');
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/chat-coach',
+      buildApiUrl('/api/chat-coach'),
       expect.objectContaining({
         body: expect.stringContaining('"mode":"strict"'),
       })
     );
+  });
+
+  it('scrolls to the latest message when the chatbot opens', async () => {
+    const user = userEvent.setup();
+
+    localStorage.setItem(
+      'study-me-chat-coach-history',
+      JSON.stringify([
+        {
+          id: 'assistant-old',
+          role: 'assistant',
+          content: 'Older message',
+          createdAt: '2026-07-04T12:00:00.000Z',
+        },
+        {
+          id: 'assistant-new',
+          role: 'assistant',
+          content: 'Newest message',
+          createdAt: '2026-07-04T12:01:00.000Z',
+        },
+      ])
+    );
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+    });
+  });
+
+  it('scrolls again when a new loading state and assistant reply are appended', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        reply: {
+          id: 'assistant-scroll',
+          role: 'assistant',
+          content: 'Here is your latest reply, captain.',
+          createdAt: '2026-07-04T12:02:00.000Z',
+        },
+      })
+    );
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    scrollIntoViewMock.mockClear();
+
+    await user.type(screen.getByLabelText(/message study coach/i), 'Help me focus');
+    await user.click(screen.getByRole('button', { name: /send message/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Here is your latest reply, captain./i)).toBeInTheDocument();
+    });
+
+    expect(scrollIntoViewMock).toHaveBeenCalled();
   });
 
   it('renders a task action card and saves after confirmation', async () => {

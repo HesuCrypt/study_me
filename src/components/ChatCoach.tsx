@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { MessageCircle, Send, Sparkles, X } from 'lucide-react';
 import type { ModuleId } from './Dashboard';
@@ -50,6 +50,8 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
   const [mode, setMode] = useState<ChatCoachMode>(() => loadChatCoachMode());
   const [suggestedAction, setSuggestedAction] = useState<ChatCoachSuggestedAction | null>(null);
   const [reviewAction, setReviewAction] = useState<ChatCoachSuggestedAction | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const latestUserText = [...messages].reverse().find((message) => message.role === 'user')?.content ?? '';
   const recommendedMode = useMemo(
@@ -136,6 +138,30 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
   const subtitle = useMemo(() => {
     return isSending ? 'Preparing your next instruction...' : 'Premium study guidance, captain.';
   }, [isSending]);
+
+  const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
+    if (bottomAnchorRef.current) {
+      bottomAnchorRef.current.scrollIntoView({ behavior, block: 'end' });
+      return;
+    }
+
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const behavior: ScrollBehavior = isSending ? 'smooth' : 'auto';
+    const frame = window.requestAnimationFrame(() => {
+      scrollToLatest(behavior);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, messages, isSending, suggestedAction, reviewAction]);
 
   const appendAssistantFallback = () => {
     setMessages((current) =>
@@ -273,7 +299,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
               </div>
             </div>
 
-            <div className="max-h-80 space-y-3 overflow-y-auto px-5 py-4">
+            <div ref={scrollContainerRef} className="max-h-80 space-y-3 overflow-y-auto px-5 py-4">
               {messages.length === 0 && (
                 <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/85">
                   Captain, welcome aboard. Tell me what you need help studying today.
@@ -300,6 +326,8 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   Preparing your next instruction...
                 </div>
               )}
+
+              <div ref={bottomAnchorRef} aria-hidden="true" className="h-px w-full" />
 
             </div>
 
