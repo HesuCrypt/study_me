@@ -41,7 +41,9 @@ const mockChartData = [
 
 const TRANSLATIONS = {
   en: {
-    greeting: "Good morning.",
+    morning: "Good morning.",
+    afternoon: "Good afternoon.",
+    evening: "Good evening.",
     subtitle: "Your flight path for today is clear. Ready for your next study session?",
     focusMode: "Enter Focus Mode",
     settings: "Local Settings",
@@ -53,7 +55,9 @@ const TRANSLATIONS = {
     appLanguage: "App Language"
   },
   tl: {
-    greeting: "Magandang umaga.",
+    morning: "Magandang umaga.",
+    afternoon: "Magandang hapon.",
+    evening: "Magandang gabi.",
     subtitle: "Ang iyong flight path para sa araw na ito ay malinaw. Handa na ba sa pag-aaral?",
     focusMode: "Focus Mode",
     settings: "Mga Setting",
@@ -65,7 +69,9 @@ const TRANSLATIONS = {
     appLanguage: "Wika ng App"
   },
   es: {
-    greeting: "Buenos días.",
+    morning: "Buenos días.",
+    afternoon: "Buenas tardes.",
+    evening: "Buenas noches.",
     subtitle: "Tu ruta de vuelo para hoy está despejada. ¿Listo para estudiar?",
     focusMode: "Modo Enfoque",
     settings: "Ajustes Locales",
@@ -88,6 +94,19 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const t = TRANSLATIONS[language];
+  const greetingKey = useMemo<'morning' | 'afternoon' | 'evening'>(() => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return 'morning';
+    }
+
+    if (hour < 18) {
+      return 'afternoon';
+    }
+
+    return 'evening';
+  }, []);
   
   // Timer State
   const [timeLeft, setTimeLeft] = useState(25 * 60);
@@ -376,7 +395,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8"
       >
         <div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6">{t.greeting}</h1>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6">{t[greetingKey]}</h1>
           <p className="text-lg md:text-xl text-neutral-500 font-medium max-w-xl">
             {t.subtitle}
           </p>
