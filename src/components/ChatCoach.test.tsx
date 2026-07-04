@@ -84,4 +84,140 @@ describe('ChatCoach', () => {
 
     expect(screen.getByRole('button', { name: /open study coach/i })).toBeInTheDocument();
   });
+
+  it('persists the selected mode and sends it with the chat request', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reply: {
+          id: 'assistant-3',
+          role: 'assistant',
+          content: 'Let us move with strict precision, captain.',
+          createdAt: '2026-07-03T12:03:00.000Z',
+        },
+      }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    await user.click(screen.getByRole('button', { name: /strict/i }));
+    await user.type(screen.getByLabelText(/message study coach/i), 'Push me to study');
+    await user.click(screen.getByRole('button', { name: /send message/i }));
+
+    expect(localStorage.getItem('study-me-chat-coach-mode')).toBe('strict');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/chat-coach',
+      expect.objectContaining({
+        body: expect.stringContaining('"mode":"strict"'),
+      })
+    );
+  });
+
+  it('renders a task action card and saves after confirmation', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          reply: {
+            id: 'assistant-4',
+            role: 'assistant',
+            content: 'Let us lock in one concrete task.',
+            createdAt: '2026-07-03T12:04:00.000Z',
+          },
+          suggestedAction: {
+            kind: 'task',
+            label: 'Add to Tasks',
+            taskText: 'Review emergency equipment checks',
+          },
+        }),
+      })
+    );
+
+    render(<ChatCoach currentModule="tasks" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    await user.click(screen.getByRole('button', { name: /motivate me to study/i }));
+    await user.click(await screen.findByRole('button', { name: /review task/i }));
+    await user.click(screen.getByRole('button', { name: /confirm save/i }));
+
+    const savedTasks = JSON.parse(localStorage.getItem('study-me-tasks') ?? '[]');
+    expect(savedTasks[0].text).toBe('Review emergency equipment checks');
+    expect(await screen.findByText(/added to daily tasks/i)).toBeInTheDocument();
+  });
+
+  it('renders a calendar action card and saves after confirmation', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          reply: {
+            id: 'assistant-5',
+            role: 'assistant',
+            content: 'I prepared your review session as a calendar event.',
+            createdAt: '2026-07-03T12:05:00.000Z',
+          },
+          suggestedAction: {
+            kind: 'calendar',
+            label: 'Add to Calendar',
+            event: {
+              title: 'Mock exam review',
+              type: 'exam',
+              date: '2099-07-05',
+              time: '15:30',
+              note: 'Cabin procedures',
+            },
+          },
+        }),
+      })
+    );
+
+    render(<ChatCoach currentModule="calendar" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    await user.click(screen.getByRole('button', { name: /help me plan tonight/i }));
+    await user.click(await screen.findByRole('button', { name: /review event/i }));
+    await user.click(screen.getByRole('button', { name: /confirm save/i }));
+
+    const savedEvents = JSON.parse(localStorage.getItem('study-me-calendar-events') ?? '[]');
+    expect(savedEvents[0].title).toBe('Mock exam review');
+    expect(await screen.findByText(/added to calendar/i)).toBeInTheDocument();
+  });
+
+  it('ignores malformed action payloads and only renders the reply text', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          reply: {
+            id: 'assistant-6',
+            role: 'assistant',
+            content: 'Stay on course, captain.',
+            createdAt: '2026-07-03T12:06:00.000Z',
+          },
+          suggestedAction: {
+            kind: 'task',
+            label: 'Add to Tasks',
+          },
+        }),
+      })
+    );
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    await user.click(screen.getByRole('button', { name: /motivate me to study/i }));
+
+    expect(await screen.findByText(/Stay on course, captain/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /review task/i })).not.toBeInTheDocument();
+  });
 });

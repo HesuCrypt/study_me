@@ -1,4 +1,5 @@
 export type ChatCoachRole = 'user' | 'assistant' | 'system';
+export type ChatCoachMode = 'gentle' | 'strict' | 'exam';
 
 export interface ChatCoachMessage {
   id: string;
@@ -7,10 +8,38 @@ export interface ChatCoachMessage {
   createdAt: string;
 }
 
+export interface StoredTask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface TaskActionSuggestion {
+  kind: 'task';
+  label: string;
+  taskText: string;
+}
+
+export interface CalendarActionSuggestion {
+  kind: 'calendar';
+  label: string;
+  event: {
+    title: string;
+    type: 'exam' | 'birthday' | 'reminder' | 'task' | 'other';
+    date: string;
+    time: string;
+    note: string;
+  };
+}
+
+export type ChatCoachSuggestedAction = TaskActionSuggestion | CalendarActionSuggestion;
+
 export const CHAT_COACH_HISTORY_KEY = 'study-me-chat-coach-history';
 export const CHAT_COACH_OPEN_KEY = 'study-me-chat-coach-open';
 export const CHAT_COACH_LAST_NUDGE_KEY = 'study-me-chat-coach-last-nudge';
+export const CHAT_COACH_MODE_KEY = 'study-me-chat-coach-mode';
 export const CHAT_COACH_HISTORY_LIMIT = 24;
+export const TASKS_STORAGE_KEY = 'study-me-tasks';
 
 export const CHAT_COACH_QUICK_PROMPTS = [
   'Motivate me to study',
@@ -64,6 +93,15 @@ export const saveChatCoachOpenState = (isOpen: boolean) => {
   localStorage.setItem(CHAT_COACH_OPEN_KEY, String(isOpen));
 };
 
+export const loadChatCoachMode = (): ChatCoachMode => {
+  const saved = localStorage.getItem(CHAT_COACH_MODE_KEY);
+  return saved === 'strict' || saved === 'exam' || saved === 'gentle' ? saved : 'gentle';
+};
+
+export const saveChatCoachMode = (mode: ChatCoachMode) => {
+  localStorage.setItem(CHAT_COACH_MODE_KEY, mode);
+};
+
 export const loadLastCoachNudge = () => {
   return localStorage.getItem(CHAT_COACH_LAST_NUDGE_KEY);
 };
@@ -93,6 +131,116 @@ export const buildCoachNudge = (now = new Date()) => {
         : 'Evening check, captain. Before we relax, let us clear one small study task first.';
 
   return createChatCoachMessage('assistant', content, now.toISOString());
+};
+
+export const getRecommendedCoachMode = (
+  currentModule: string,
+  latestUserMessage: string
+): ChatCoachMode => {
+  const text = latestUserMessage.toLowerCase();
+
+  if (currentModule === 'exams' || /quiz|review|exam|test|recall|finals/.test(text)) {
+    return 'exam';
+  }
+
+  if (/procrastinat|lazy|discipline|strict|push me/.test(text)) {
+    return 'strict';
+  }
+
+  return 'gentle';
+};
+
+export const isTaskActionSuggestion = (value: unknown): value is TaskActionSuggestion => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as TaskActionSuggestion;
+  return candidate.kind === 'task' && typeof candidate.label === 'string' && typeof candidate.taskText === 'string';
+};
+
+export const isCalendarActionSuggestion = (value: unknown): value is CalendarActionSuggestion => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as CalendarActionSuggestion;
+  return (
+    candidate.kind === 'calendar' &&
+    typeof candidate.label === 'string' &&
+    !!candidate.event &&
+    typeof candidate.event.title === 'string' &&
+    typeof candidate.event.type === 'string' &&
+    typeof candidate.event.date === 'string' &&
+    typeof candidate.event.time === 'string' &&
+    typeof candidate.event.note === 'string'
+  );
+};
+
+export const createSuggestedTaskAction = (taskText: string): TaskActionSuggestion => ({
+  kind: 'task',
+  label: 'Add to Tasks',
+  taskText,
+});
+
+export const createSuggestedCalendarAction = (
+  event: CalendarActionSuggestion['event']
+): CalendarActionSuggestion => ({
+  kind: 'calendar',
+  label: 'Add to Calendar',
+  event,
+});
+
+export const buildTaskFromSuggestion = (suggestion: TaskActionSuggestion): StoredTask => ({
+  id: Date.now().toString(),
+  text: suggestion.taskText.trim(),
+  completed: false,
+});
+
+export const extractSuggestedActionFromReply = (replyText: string) => {
+  const lines = replyText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const actionLine = [...lines]
+    .reverse()
+    .find((line) => line.startsWith('ACTION_TASK:') || line.startsWith('ACTION_CALENDAR:'));
+
+  const content = lines
+    .filter((line) => line !== actionLine)
+    .join('\n')
+    .trim();
+
+  if (!actionLine) {
+    return {
+      content: content || replyText.trim(),
+      suggestedAction: undefined,
+    };
+  }
+
+  if (actionLine.startsWith('ACTION_TASK:')) {
+    const taskText = actionLine.replace('ACTION_TASK:', '').trim();
+    return {
+      content,
+      suggestedAction: taskText ? createSuggestedTaskAction(taskText) : undefined,
+    };
+  }
+
+  const raw = actionLine.replace('ACTION_CALENDAR:', '').trim();
+  const [title, type, date, time, note] = raw.split('|').map((value) => value?.trim() ?? '');
+
+  if (title && type && date && time) {
+    return {
+      content,
+      suggestedAction: createSuggestedCalendarAction({
+        title,
+        type: type as CalendarActionSuggestion['event']['type'],
+        date,
+        time,
+        note,
+      }),
+    };
+  }
+
+  return {
+    content,
+    suggestedAction: undefined,
+  };
 };
 
 export const toGeminiContents = (messages: ChatCoachMessage[]) => {

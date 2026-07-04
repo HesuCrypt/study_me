@@ -2,19 +2,32 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { MessageCircle, Send, Sparkles, X } from 'lucide-react';
 import type { ModuleId } from './Dashboard';
+import { ActionCard } from './chat-coach/ActionCard';
+import { ConfirmationSheet } from './chat-coach/ConfirmationSheet';
+import { ModeSwitcher } from './chat-coach/ModeSwitcher';
+import { loadCalendarEvents, saveCalendarEvents } from '../lib/calendar';
 import {
   CHAT_COACH_QUICK_PROMPTS,
   buildCoachNudge,
+  buildTaskFromSuggestion,
   createChatCoachMessage,
+  getRecommendedCoachMode,
+  isCalendarActionSuggestion,
+  isTaskActionSuggestion,
   loadChatCoachHistory,
+  loadChatCoachMode,
   loadChatCoachOpenState,
   loadLastCoachNudge,
+  saveChatCoachMode,
   saveChatCoachHistory,
   saveChatCoachOpenState,
   saveLastCoachNudge,
   shouldTriggerCoachNudge,
+  TASKS_STORAGE_KEY,
   trimChatCoachHistory,
   type ChatCoachMessage,
+  type ChatCoachMode,
+  type ChatCoachSuggestedAction,
 } from '../lib/chatCoach';
 
 interface ChatCoachProps {
@@ -23,6 +36,7 @@ interface ChatCoachProps {
 
 interface ChatCoachResponse {
   reply: ChatCoachMessage;
+  suggestedAction?: unknown;
 }
 
 export function ChatCoach({ currentModule }: ChatCoachProps) {
@@ -32,6 +46,15 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
   const [isSending, setIsSending] = useState(false);
   const [hasUnreadNudge, setHasUnreadNudge] = useState(false);
   const [idleSignal, setIdleSignal] = useState(0);
+  const [mode, setMode] = useState<ChatCoachMode>(() => loadChatCoachMode());
+  const [suggestedAction, setSuggestedAction] = useState<ChatCoachSuggestedAction | null>(null);
+  const [reviewAction, setReviewAction] = useState<ChatCoachSuggestedAction | null>(null);
+
+  const latestUserText = [...messages].reverse().find((message) => message.role === 'user')?.content ?? '';
+  const recommendedMode = useMemo(
+    () => getRecommendedCoachMode(currentModule, latestUserText || input),
+    [currentModule, latestUserText, input]
+  );
 
   const queueNudge = (delay: number) => {
     const now = new Date();
@@ -61,6 +84,10 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
   useEffect(() => {
     saveChatCoachHistory(messages);
   }, [messages]);
+
+  useEffect(() => {
+    saveChatCoachMode(mode);
+  }, [mode]);
 
   useEffect(() => {
     if (currentModule !== 'dashboard') {
@@ -106,7 +133,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
   }, [idleSignal, isOpen]);
 
   const subtitle = useMemo(() => {
-    return isSending ? 'Preparing your next instruction...' : 'Flight deck study coach';
+    return isSending ? 'Preparing your next instruction...' : 'Premium study guidance, captain.';
   }, [isSending]);
 
   const appendAssistantFallback = () => {
@@ -119,6 +146,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
         ),
       ])
     );
+    setSuggestedAction(null);
   };
 
   const sendMessage = async (content: string) => {
@@ -136,7 +164,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
       const response = await fetch('/api/chat-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: nextHistory }),
+        body: JSON.stringify({ messages: nextHistory, mode, currentModule }),
       });
 
       if (!response.ok) {
@@ -145,12 +173,53 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
 
       const data = (await response.json()) as ChatCoachResponse;
       setMessages((current) => trimChatCoachHistory([...current, data.reply]));
+      setSuggestedAction(
+        isTaskActionSuggestion(data.suggestedAction) || isCalendarActionSuggestion(data.suggestedAction)
+          ? data.suggestedAction
+          : null
+      );
     } catch (error) {
       console.error('Failed to send coach message', error);
       appendAssistantFallback();
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleConfirmAction = () => {
+    if (!reviewAction) return;
+
+    let confirmationText = 'Saved successfully.';
+
+    if (isTaskActionSuggestion(reviewAction)) {
+      const savedTasks = JSON.parse(localStorage.getItem(TASKS_STORAGE_KEY) ?? '[]');
+      const nextTasks = [...savedTasks, buildTaskFromSuggestion(reviewAction)];
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks));
+      confirmationText = 'Added to Daily Tasks.';
+    }
+
+    if (isCalendarActionSuggestion(reviewAction)) {
+      const currentEvents = loadCalendarEvents();
+      const nextEvents = [
+        ...currentEvents,
+        {
+          id: Date.now().toString(),
+          title: reviewAction.event.title,
+          type: reviewAction.event.type,
+          date: reviewAction.event.date,
+          time: reviewAction.event.time,
+          note: reviewAction.event.note,
+        },
+      ];
+      saveCalendarEvents(nextEvents);
+      confirmationText = 'Added to Calendar.';
+    }
+
+    setMessages((current) =>
+      trimChatCoachHistory([...current, createChatCoachMessage('assistant', confirmationText)])
+    );
+    setReviewAction(null);
+    setSuggestedAction(null);
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -164,7 +233,7 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label="Open Study Coach"
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-black text-white shadow-lg"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl"
       >
         <MessageCircle className="h-5 w-5" />
         {hasUnreadNudge && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-white ring-2 ring-black" />}
@@ -173,30 +242,36 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.section
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            className="fixed bottom-24 right-6 z-50 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[28px] border border-neutral-200 bg-white shadow-2xl"
+            exit={{ opacity: 0, y: 18, scale: 0.98 }}
+            className="fixed bottom-24 right-6 z-50 w-[min(27rem,calc(100vw-2rem))] overflow-hidden rounded-[32px] border border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.08))] text-white shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl"
           >
-            <div className="flex items-start justify-between border-b border-neutral-200 px-5 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-neutral-400">Study Coach</p>
-                <h2 className="mt-1 text-lg font-semibold">Cabin Briefing</h2>
-                <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>
+            <div className="border-b border-white/15 px-5 py-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.32em] text-white/60">Study Coach</p>
+                  <h2 className="mt-2 text-lg font-semibold">Cabin Briefing</h2>
+                  <p className="mt-1 text-sm text-white/70">{subtitle}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Close Study Coach"
+                  className="rounded-full border border-white/15 bg-white/5 p-2 text-white/80"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                aria-label="Close Study Coach"
-                className="rounded-full border border-neutral-200 p-2 text-neutral-500 hover:text-black"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+              <div className="mt-4">
+                <ModeSwitcher activeMode={mode} recommendedMode={recommendedMode} onChange={setMode} />
+              </div>
             </div>
 
             <div className="max-h-80 space-y-3 overflow-y-auto px-5 py-4">
               {messages.length === 0 && (
-                <div className="rounded-3xl bg-neutral-50 p-4 text-sm text-neutral-600">
+                <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/80">
                   Captain, welcome aboard. Tell me what you need help studying today.
                 </div>
               )}
@@ -206,29 +281,42 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   key={message.id}
                   className={
                     message.role === 'user'
-                      ? 'ml-auto max-w-[85%] rounded-3xl bg-black px-4 py-3 text-sm text-white'
-                      : 'max-w-[85%] rounded-3xl bg-neutral-100 px-4 py-3 text-sm text-neutral-800'
+                      ? 'ml-auto max-w-[85%] rounded-3xl bg-white px-4 py-3 text-sm text-black'
+                      : 'max-w-[85%] rounded-3xl bg-white/10 px-4 py-3 text-sm text-white'
                   }
                 >
                   {message.content}
                 </div>
               ))}
 
+              {suggestedAction && <ActionCard action={suggestedAction} onReview={() => setReviewAction(suggestedAction)} />}
+
               {isSending && (
-                <div className="max-w-[85%] rounded-3xl bg-neutral-100 px-4 py-3 text-sm text-neutral-500">
+                <div className="max-w-[85%] rounded-3xl bg-white/10 px-4 py-3 text-sm text-white/60">
                   Preparing your next instruction...
                 </div>
               )}
+
             </div>
 
-            <div className="border-t border-neutral-200 px-5 py-4">
+            <div className="border-t border-white/15 px-5 py-4">
+              {reviewAction && (
+                <div className="mb-4">
+                  <ConfirmationSheet
+                    action={reviewAction}
+                    onConfirm={handleConfirmAction}
+                    onCancel={() => setReviewAction(null)}
+                  />
+                </div>
+              )}
+
               <div className="mb-3 flex flex-wrap gap-2">
                 {CHAT_COACH_QUICK_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
                     onClick={() => void sendMessage(prompt)}
-                    className="rounded-full border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600 hover:border-black hover:text-black"
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-white/80"
                     aria-label={prompt}
                   >
                     <span className="inline-flex items-center gap-2">
@@ -248,15 +336,15 @@ export function ChatCoach({ currentModule }: ChatCoachProps) {
                   aria-label="Message Study Coach"
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Ask for motivation, a study plan, or your next task."
+                  placeholder="Ask for motivation, a study plan, or a calendar suggestion."
                   rows={2}
-                  className="min-h-[72px] flex-1 resize-none rounded-3xl border border-neutral-200 px-4 py-3 text-sm outline-none focus:border-black"
+                  className="min-h-[76px] flex-1 resize-none rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/40"
                 />
                 <button
                   type="submit"
                   aria-label="Send Message"
                   disabled={isSending}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white disabled:opacity-50"
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
                 </button>
