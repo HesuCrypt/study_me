@@ -1,10 +1,4 @@
 import { GoogleGenAI } from '@google/genai';
-import {
-  CHAT_COACH_SYSTEM_PROMPT,
-  extractSuggestedActionFromReply,
-  toGeminiContents,
-  type ChatCoachMessage,
-} from '../src/lib/chatCoach';
 
 type ApiRequest = {
   method?: string;
@@ -17,6 +11,34 @@ type ApiResponse = {
   json: (body: unknown) => void;
   end: (body?: string) => void;
 };
+
+type ChatCoachMessage = {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  createdAt: string;
+};
+
+type TaskActionSuggestion = {
+  kind: 'task';
+  label: string;
+  taskText: string;
+};
+
+type CalendarActionSuggestion = {
+  kind: 'calendar';
+  label: string;
+  event: {
+    title: string;
+    type: 'exam' | 'birthday' | 'reminder' | 'task' | 'other';
+    date: string;
+    time: string;
+    note: string;
+  };
+};
+
+const CHAT_COACH_SYSTEM_PROMPT =
+  "You are Study Me's AI coach. Speak like a polished flight attendant: warm, professional, gently firm, and encouraging. Keep guiding the user back to studying, focus, tasks, revision, or practical next steps. Be concise by default. Never shame the user. Never claim to have modified tasks, calendar entries, or app data unless the UI explicitly confirms that action.";
 
 const parseBody = (body: unknown) => {
   if (typeof body === 'string') {
@@ -32,6 +54,85 @@ const parseBody = (body: unknown) => {
   }
 
   return null;
+};
+
+const trimChatCoachHistory = (messages: ChatCoachMessage[], limit = 24) => {
+  return messages.slice(-limit);
+};
+
+const toGeminiContents = (messages: ChatCoachMessage[]) => {
+  return trimChatCoachHistory(messages)
+    .filter((message) => message.role !== 'system')
+    .map((message) => ({
+      role: message.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: message.content }],
+    }));
+};
+
+const createSuggestedTaskAction = (taskText: string): TaskActionSuggestion => ({
+  kind: 'task',
+  label: 'Add to Tasks',
+  taskText,
+});
+
+const createSuggestedCalendarAction = (
+  event: CalendarActionSuggestion['event']
+): CalendarActionSuggestion => ({
+  kind: 'calendar',
+  label: 'Add to Calendar',
+  event,
+});
+
+const extractSuggestedActionFromReply = (replyText: string) => {
+  const lines = replyText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const actionLine = [...lines]
+    .reverse()
+    .find((line) => line.startsWith('ACTION_TASK:') || line.startsWith('ACTION_CALENDAR:'));
+
+  const content = lines
+    .filter((line) => line !== actionLine)
+    .join('\n')
+    .trim();
+
+  if (!actionLine) {
+    return {
+      content: content || replyText.trim(),
+      suggestedAction: undefined,
+    };
+  }
+
+  if (actionLine.startsWith('ACTION_TASK:')) {
+    const taskText = actionLine.replace('ACTION_TASK:', '').trim();
+    return {
+      content,
+      suggestedAction: taskText ? createSuggestedTaskAction(taskText) : undefined,
+    };
+  }
+
+  const raw = actionLine.replace('ACTION_CALENDAR:', '').trim();
+  const [title, type, date, time, note] = raw.split('|').map((value) => value?.trim() ?? '');
+
+  if (title && type && date && time) {
+    return {
+      content,
+      suggestedAction: createSuggestedCalendarAction({
+        title,
+        type: type as CalendarActionSuggestion['event']['type'],
+        date,
+        time,
+        note,
+      }),
+    };
+  }
+
+  return {
+    content,
+    suggestedAction: undefined,
+  };
 };
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
