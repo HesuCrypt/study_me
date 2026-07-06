@@ -14,24 +14,34 @@ const LABELS: Record<ChatCoachMode, string> = {
 
 export function ModeSwitcher({ activeMode, recommendedMode, onChange }: ModeSwitcherProps) {
   return (
-    <div>
-      <div className="inline-flex rounded-full border border-white/30 bg-white/10 p-1 backdrop-blur-xl">
-        {(['gentle', 'strict', 'exam'] as ChatCoachMode[]).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => onChange(mode)}
-            aria-pressed={activeMode === mode}
-            className={`rounded-full px-3 py-2 text-xs font-medium transition ${
-              activeMode === mode ? 'bg-white text-black' : 'text-white/80'
-            }`}
-            aria-label={LABELS[mode]}
-          >
-            {LABELS[mode]}
-          </button>
-        ))}
+    <div className="flex items-center">
+      <div className="inline-flex rounded-full border border-black/5 bg-black/[0.03] p-0.5">
+        {(['gentle', 'strict', 'exam'] as ChatCoachMode[]).map((mode) => {
+          const isRecommended = recommendedMode === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => onChange(mode)}
+              aria-pressed={activeMode === mode}
+              className={`relative rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
+                activeMode === mode
+                  ? 'bg-black text-white shadow-xs'
+                  : 'text-black/65 hover:text-black/90'
+              }`}
+              aria-label={LABELS[mode]}
+            >
+              {LABELS[mode]}
+              {isRecommended && activeMode !== mode && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
-      <p className="mt-2 text-xs text-white/70">Recommended: {LABELS[recommendedMode]}</p>
     </div>
   );
 }

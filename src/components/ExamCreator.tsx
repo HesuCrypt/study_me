@@ -4,28 +4,6 @@ import { ArrowLeft, Plus, Trash2, Edit2, Play, Check, X, BookMarked, Save, Spark
 import { ModuleId } from './Dashboard';
 import { buildApiUrl, parseApiJson } from '../lib/api';
 
-// #region debug-point A:exam-fetch-reporter
-const reportExamDebug = (
-  hypothesisId: 'A' | 'B' | 'C' | 'D' | 'E',
-  msg: string,
-  data: Record<string, unknown>
-) => {
-  fetch('http://127.0.0.1:7777/event', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: 'exam-api-unavailable',
-      runId: 'pre-fix',
-      hypothesisId,
-      location: 'src/components/ExamCreator.tsx',
-      msg: `[DEBUG] ${msg}`,
-      data,
-      ts: Date.now(),
-    }),
-  }).catch(() => {});
-};
-// #endregion
-
 interface Question {
   id: string;
   question: string;
@@ -103,16 +81,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
     setGenerateError('');
     
     try {
-      const apiUrl = buildApiUrl('/api/generate-exam');
-      // #region debug-point A:request-start
-      reportExamDebug('A', 'Starting exam generation request', {
-        apiUrl,
-        topic: generateTopic,
-        questionCount: generateCount,
-        difficulty: generateDifficulty,
-      });
-      // #endregion
-      const response = await fetch(apiUrl, {
+      const response = await fetch(buildApiUrl('/api/generate-exam'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -121,28 +90,10 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
           difficulty: generateDifficulty 
         })
       });
-      // #region debug-point B:http-response
-      reportExamDebug('B', 'Received HTTP response for exam generation', {
-        apiUrl,
-        status: response.status,
-        ok: response.ok,
-        redirected: response.redirected,
-        contentType: response.headers.get('content-type'),
-      });
-      // #endregion
       const data = await parseApiJson<GenerateExamResponse>(
         response,
         'The exam service is unavailable right now. Check the deployed API URL.'
       );
-      // #region debug-point C:parsed-json
-      reportExamDebug('C', 'Parsed exam generation response JSON', {
-        apiUrl,
-        ok: response.ok,
-        title: data.title,
-        questionCount: Array.isArray(data.questions) ? data.questions.length : null,
-        error: data.error ?? null,
-      });
-      // #endregion
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate exam');
@@ -163,12 +114,6 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
       setView('list');
       setGenerateTopic('');
     } catch (error: any) {
-      // #region debug-point D:request-error
-      reportExamDebug('D', 'Exam generation request failed', {
-        errorName: error instanceof Error ? error.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-      // #endregion
       setGenerateError(error instanceof Error ? error.message : 'Failed to generate exam');
     } finally {
       setIsGenerating(false);

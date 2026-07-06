@@ -233,6 +233,43 @@ describe('ChatCoach', () => {
     expect(screen.getByRole('button', { name: /open full coach/i })).toBeInTheDocument();
   });
 
+  it('renders a simplified welcome state with a pinned composer when the floating coach opens', async () => {
+    const user = userEvent.setup();
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+
+    expect(screen.getByRole('heading', { name: /what should we tackle today/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach composer/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach quick prompts/i })).toBeInTheDocument();
+  });
+
+  it('keeps the composer visible after the first assistant reply is rendered', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
+          reply: {
+            id: 'assistant-minimal-1',
+            role: 'assistant',
+            content: 'Start with your weakest topic for 20 focused minutes.',
+            createdAt: '2026-07-04T18:00:00.000Z',
+          },
+        })
+      )
+    );
+
+    render(<ChatCoach currentModule="dashboard" />);
+
+    await user.click(screen.getByRole('button', { name: /open study coach/i }));
+    await user.click(screen.getByRole('button', { name: /what should i study next/i }));
+
+    expect(await screen.findByText(/start with your weakest topic/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach composer/i })).toBeInTheDocument();
+  });
+
   it('renders a calendar action card and saves after confirmation', async () => {
     const user = userEvent.setup();
     vi.stubGlobal(

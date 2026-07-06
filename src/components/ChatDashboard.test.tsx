@@ -111,14 +111,37 @@ describe('ChatDashboard', () => {
     expect(await screen.findByText(/Let us map your evening study block, captain./i)).toBeInTheDocument();
   });
 
-  it('renders the chatbot page as a module-style layout with a main chat card and support card', async () => {
+  it('renders the dedicated page as a simplified conversation-first module', async () => {
     const user = userEvent.setup();
 
     render(<App />);
 
     await user.click(screen.getByText(/^Study Coach$/i));
 
-    expect(await screen.findByText(/study coach module/i)).toBeInTheDocument();
-    expect(screen.getByText(/coach overview/i)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^study coach$/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach conversation/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach composer/i })).toBeInTheDocument();
+  });
+
+  it('renders the dedicated page with a simplified conversation-first shell', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByText(/^Study Coach$/i));
+
+    expect(await screen.findByRole('heading', { name: /study coach/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach conversation/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /study coach composer/i })).toBeInTheDocument();
+  });
+
+  it('does not render the old coach overview support card in the primary dedicated layout', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByText(/^Study Coach$/i));
+
+    expect(screen.queryByText(/coach overview/i)).not.toBeInTheDocument();
   });
 });

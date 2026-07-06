@@ -1,16 +1,15 @@
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { MessageCircle, Send, Sparkles, X } from 'lucide-react';
+import { MessageCircle, Sparkles, X } from 'lucide-react';
 import type { ModuleId } from './Dashboard';
-import { ActionCard } from './chat-coach/ActionCard';
-import { ConfirmationSheet } from './chat-coach/ConfirmationSheet';
 import { ModeSwitcher } from './chat-coach/ModeSwitcher';
+import { ChatCoachThread } from './chat-coach/ChatCoachThread';
+import { ChatComposerDock } from './chat-coach/ChatComposerDock';
 import {
   type ChatCoachController,
   useChatCoachController,
 } from './chat-coach/useChatCoachController';
 import {
-  CHAT_COACH_QUICK_PROMPTS,
   buildCoachNudge,
   loadChatCoachOpenState,
   loadLastCoachNudge,
@@ -56,6 +55,31 @@ export function ChatCoach({ currentModule, onOpenFullCoach = () => {}, controlle
     saveChatCoachOpenState(isOpen);
     if (isOpen) {
       setHasUnreadNudge(false);
+      
+      // Lock scroll on mobile only
+      const lockBodyScroll = () => {
+        if (window.innerWidth < 640) {
+          document.body.style.overflow = 'hidden';
+          document.body.style.position = 'fixed';
+          document.body.style.width = '100%';
+          document.body.style.height = '100%';
+        } else {
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.height = '';
+        }
+      };
+
+      lockBodyScroll();
+      window.addEventListener('resize', lockBodyScroll);
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        window.removeEventListener('resize', lockBodyScroll);
+      };
     }
   }, [isOpen]);
 
@@ -103,7 +127,7 @@ export function ChatCoach({ currentModule, onOpenFullCoach = () => {}, controlle
   }, [idleSignal, isOpen]);
 
   const subtitle = useMemo(() => {
-    return activeController.isSending ? 'Preparing your next instruction...' : 'Premium study guidance, captain.';
+    return activeController.isSending ? 'Thinking...' : 'Simple guidance, ready when you are.';
   }, [activeController.isSending]);
 
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
@@ -130,21 +154,16 @@ export function ChatCoach({ currentModule, onOpenFullCoach = () => {}, controlle
     return () => window.cancelAnimationFrame(frame);
   }, [activeController.isSending, activeController.messages, activeController.reviewAction, activeController.suggestedAction, isOpen]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    await activeController.sendMessage(activeController.input);
-  };
-
   return (
     <>
       <button
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label="Open Study Coach"
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl transition hover:scale-105 active:scale-95"
       >
         <MessageCircle className="h-5 w-5" />
-        {hasUnreadNudge && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-white ring-2 ring-black" />}
+        {hasUnreadNudge && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-white ring-2 ring-black animate-pulse" />}
       </button>
 
       <AnimatePresence>
@@ -155,130 +174,77 @@ export function ChatCoach({ currentModule, onOpenFullCoach = () => {}, controlle
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            className="fixed inset-x-3 bottom-3 top-auto z-50 overflow-hidden rounded-[28px] border border-slate-900/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.82))] text-white shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-24 sm:right-6 sm:w-[min(27rem,calc(100vw-2rem))]"
+            className="fixed inset-0 z-50 flex h-[100dvh] w-screen flex-col overflow-hidden bg-white text-black sm:inset-auto sm:bottom-24 sm:right-6 sm:h-[min(44rem,calc(100vh-8rem))] sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-[32px] sm:border sm:border-black/8 sm:shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
           >
-            <div className="border-b border-white/10 px-5 py-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.32em] text-white/60">Study Coach</p>
-                  <h2 className="mt-2 text-lg font-semibold">Cabin Briefing</h2>
-                  <p className="mt-1 text-sm text-white/70">{subtitle}</p>
+            <div className="flex flex-col border-b border-black/5 bg-white/80 px-4 py-3 backdrop-blur-md sm:px-5 sm:py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
+                    <Sparkles className="h-4 w-4 text-indigo-300" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-tight text-black">Study Coach</p>
+                    <p className="text-[10px] font-medium text-black/40 uppercase tracking-wider sm:block hidden">{subtitle}</p>
+                  </div>
                 </div>
+                
+                <div className="flex items-center gap-2">
+                  <ModeSwitcher
+                    activeMode={activeController.mode}
+                    recommendedMode={activeController.recommendedMode}
+                    onChange={activeController.setMode}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    aria-label="Close Study Coach"
+                    className="rounded-full border border-black/10 bg-black/[0.03] p-1.5 text-black/70 hover:bg-black/5 transition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs text-black/50 sm:hidden block">{subtitle}</p>
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
-                  aria-label="Close Study Coach"
-                  className="rounded-full border border-white/15 bg-white/10 p-2 text-white/80"
+                  onClick={onOpenFullCoach}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition"
                 >
-                  <X className="h-4 w-4" />
+                  <Sparkles className="h-3 w-3" />
+                  Open Full Coach
                 </button>
               </div>
+            </div>
 
-              <div className="mt-4">
-                <ModeSwitcher
-                  activeMode={activeController.mode}
-                  recommendedMode={activeController.recommendedMode}
-                  onChange={activeController.setMode}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={onOpenFullCoach}
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-medium text-white/85"
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div
+                ref={scrollContainerRef}
+                aria-label="Study Coach Conversation"
+                role="region"
+                className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-2 sm:px-5"
               >
-                <Sparkles className="h-3 w-3" />
-                Open Full Coach
-              </button>
-            </div>
-
-            <div ref={scrollContainerRef} className="max-h-[min(82vh,20rem)] space-y-3 overflow-y-auto px-5 py-4 sm:max-h-80">
-              {activeController.messages.length === 0 && (
-                <div className="rounded-3xl bg-white/10 p-4 text-sm text-white/85">
-                  Captain, welcome aboard. Tell me what you need help studying today.
-                </div>
-              )}
-
-              {activeController.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={
-                    message.role === 'user'
-                      ? 'ml-auto max-w-[85%] rounded-3xl bg-white px-4 py-3 text-sm text-black'
-                      : 'max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
-                  }
-                >
-                  {message.content}
-                </div>
-              ))}
-
-              {activeController.suggestedAction && (
-                <ActionCard
-                  action={activeController.suggestedAction}
-                  onReview={() => activeController.setReviewAction(activeController.suggestedAction)}
+                <ChatCoachThread
+                  messages={activeController.messages}
+                  isSending={activeController.isSending}
+                  suggestedAction={activeController.suggestedAction}
+                  reviewAction={activeController.reviewAction}
+                  onReviewAction={activeController.setReviewAction}
+                  onConfirmAction={activeController.confirmAction}
+                  bottomAnchorRef={bottomAnchorRef}
+                  surface="floating"
                 />
-              )}
-
-              {activeController.isSending && (
-                <div className="max-w-[85%] rounded-3xl bg-white/12 px-4 py-3 text-sm text-white/70">
-                  Preparing your next instruction...
-                </div>
-              )}
-
-              <div ref={bottomAnchorRef} aria-hidden="true" className="h-px w-full" />
-
-            </div>
-
-            <div className="border-t border-white/10 px-5 py-4">
-              {activeController.reviewAction && (
-                <div className="mb-4">
-                  <ConfirmationSheet
-                    action={activeController.reviewAction}
-                    onConfirm={activeController.confirmAction}
-                    onCancel={() => activeController.setReviewAction(null)}
-                  />
-                </div>
-              )}
-
-              <div className="mb-3 flex flex-wrap gap-2">
-                {CHAT_COACH_QUICK_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => void activeController.sendMessage(prompt)}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white/85"
-                    aria-label={prompt}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <Sparkles className="h-3 w-3" />
-                      {prompt}
-                    </span>
-                  </button>
-                ))}
               </div>
 
-              <form onSubmit={handleSubmit} className="flex items-end gap-3">
-                <label htmlFor="chat-coach-input" className="sr-only">
-                  Message Study Coach
-                </label>
-                <textarea
-                  id="chat-coach-input"
-                  aria-label="Message Study Coach"
-                  value={activeController.input}
-                  onChange={(event) => activeController.setInput(event.target.value)}
-                  placeholder="Ask for motivation, a study plan, or a calendar suggestion."
-                  rows={2}
-                  className="min-h-[76px] flex-1 resize-none rounded-3xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white outline-none placeholder:text-white/55"
-                />
-                <button
-                  type="submit"
-                  aria-label="Send Message"
-                  disabled={activeController.isSending}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </form>
+              <ChatComposerDock
+                input={activeController.input}
+                isSending={activeController.isSending}
+                onInputChange={activeController.setInput}
+                onSubmitMessage={activeController.sendMessage}
+                theme="light"
+                inputId="chat-coach-input"
+              />
             </div>
           </motion.section>
         )}
