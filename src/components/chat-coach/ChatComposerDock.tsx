@@ -9,6 +9,7 @@ interface ChatComposerDockProps {
   onSubmitMessage: (message: string) => Promise<void> | void;
   theme: 'dark' | 'light';
   inputId: string;
+  variant?: 'floating' | 'docked';
 }
 
 export function ChatComposerDock({
@@ -18,11 +19,21 @@ export function ChatComposerDock({
   onSubmitMessage,
   theme,
   inputId,
+  variant = 'docked',
 }: ChatComposerDockProps) {
   const isDark = theme === 'dark';
-  const dockClassName = 'border-t border-black/5 bg-white/80 text-black';
+  const isFloating = variant === 'floating';
+
+  const dockClassName = isFloating
+    ? 'bg-transparent text-black'
+    : 'border-t border-black/5 bg-white/80 text-black backdrop-blur-xl';
+
   const promptClassName = 'border border-black/5 bg-black/[0.03] text-black/70 hover:bg-black/[0.06] hover:text-black transition-all duration-200';
-  const textareaClassName = 'border border-black/5 bg-black/[0.03] text-black placeholder:text-black/40 focus:bg-white focus:border-black/10 focus:ring-2 focus:ring-black/5 transition-all duration-200';
+
+  const textareaClassName = isFloating
+    ? 'border border-black/10 bg-white text-black placeholder:text-black/40 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/10 shadow-sm transition-all duration-200'
+    : 'border border-black/5 bg-black/[0.03] text-black placeholder:text-black/40 focus:bg-white focus:border-black/10 focus:ring-2 focus:ring-black/5 transition-all duration-200';
+
   const buttonClassName = 'bg-black text-white hover:bg-black/90 active:scale-95 transition-all duration-200';
 
   const handleSubmit = async (event: FormEvent) => {
@@ -35,7 +46,7 @@ export function ChatComposerDock({
     <div
       role="region"
       aria-label="Study Coach Composer"
-      className={`sticky bottom-0 px-4 pb-4 pt-3 backdrop-blur-xl sm:px-5 ${dockClassName}`}
+      className={`sticky bottom-0 px-4 pb-4 pt-3 sm:px-5 ${dockClassName}`}
     >
       <div 
         role="region" 

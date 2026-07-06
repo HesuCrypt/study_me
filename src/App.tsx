@@ -32,11 +32,13 @@ export default function App() {
           controller={chatController}
         />
       )}
-      <ChatCoach
-        currentModule={currentModule}
-        onOpenFullCoach={() => setCurrentModule('chat')}
-        controller={chatController}
-      />
+      {currentModule !== 'chat' && (
+        <ChatCoach
+          currentModule={currentModule}
+          onOpenFullCoach={() => setCurrentModule('chat')}
+          controller={chatController}
+        />
+      )}
     </div>
   );
 }

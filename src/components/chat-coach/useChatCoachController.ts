@@ -42,6 +42,7 @@ export interface ChatCoachController {
   sendMessage: (content: string) => Promise<void>;
   confirmAction: () => void;
   appendAssistantMessage: (content: string, createdAt?: string) => void;
+  clearHistory: () => void;
 }
 
 export function useChatCoachController(
@@ -189,6 +190,16 @@ export function useChatCoachController(
     setSuggestedAction(null);
   }, [enabled, reviewAction]);
 
+  const clearHistory = useCallback(() => {
+    if (!enabled) {
+      return;
+    }
+    setMessages([]);
+    setSuggestedAction(null);
+    setReviewAction(null);
+    saveChatCoachHistory([]);
+  }, [enabled]);
+
   return {
     input,
     isSending,
@@ -203,5 +214,6 @@ export function useChatCoachController(
     sendMessage,
     confirmAction,
     appendAssistantMessage,
+    clearHistory,
   };
 }

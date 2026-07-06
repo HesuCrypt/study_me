@@ -20,7 +20,7 @@ describe('ChatDashboard', () => {
     },
   });
 
-  it('opens the dedicated chatbot page from app navigation and keeps the floating launcher visible', async () => {
+  it('opens the dedicated chatbot page from app navigation and hides the floating launcher', async () => {
     const user = userEvent.setup();
 
     render(<App />);
@@ -29,7 +29,7 @@ describe('ChatDashboard', () => {
     await user.click(screen.getByRole('button', { name: /open full coach/i }));
 
     expect(await screen.findByRole('heading', { name: /^study coach$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /open study coach/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open study coach/i })).not.toBeInTheDocument();
   });
 
   it('reuses persisted history inside the dedicated chatbot page', async () => {

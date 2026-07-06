@@ -358,8 +358,8 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
             <span>{currentQuestionIndex + 1} / {activeExam.questions.length}</span>
           </div>
 
-          <div className="w-full min-h-[400px] border border-neutral-200 bg-white p-8 md:p-12 flex flex-col items-center justify-center text-center relative group">
-            <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-8">
+          <div className="w-full min-h-[400px] border border-neutral-200 bg-white p-8 md:p-12 flex flex-col items-start justify-center relative group">
+            <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-8 text-justify w-full">
               {activeExam.questions[currentQuestionIndex].question}
             </h2>
 
@@ -405,7 +405,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full pt-8 border-t border-neutral-100"
                   >
-                    <p className="text-xl text-neutral-600 font-medium">
+                    <p className="text-xl text-neutral-600 font-medium text-justify">
                       {activeExam.questions[currentQuestionIndex].answer}
                     </p>
                   </motion.div>
