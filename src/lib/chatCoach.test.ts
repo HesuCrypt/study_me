@@ -69,22 +69,22 @@ describe('chatCoach helpers', () => {
     expect(shouldTriggerCoachNudge(now, '2026-07-03T17:45:00.000Z')).toBe(true);
   });
 
-  it('builds a flight-attendant style nudge message', () => {
+  it('builds a nursing-style nudge message', () => {
     const nudge = buildCoachNudge(new Date('2026-07-03T19:00:00.000Z'));
     expect(nudge.role).toBe('assistant');
-    expect(nudge.content).toMatch(/captain|study|course/i);
+    expect(nudge.content).toMatch(/nurse|study|course/i);
   });
 
   it('drops system messages when building Gemini contents', () => {
     const contents = toGeminiContents([
       createChatCoachMessage('system', 'internal'),
       createChatCoachMessage('user', 'Help me study'),
-      createChatCoachMessage('assistant', 'Let us review boarding procedures.'),
+      createChatCoachMessage('assistant', 'Let us review clinical procedures.'),
     ]);
 
     expect(contents).toEqual([
       { role: 'user', parts: [{ text: 'Help me study' }] },
-      { role: 'model', parts: [{ text: 'Let us review boarding procedures.' }] },
+      { role: 'model', parts: [{ text: 'Let us review clinical procedures.' }] },
     ]);
   });
 
@@ -138,7 +138,7 @@ describe('chatCoach helpers', () => {
     const payload: TaskActionSuggestion = {
       kind: 'task',
       label: 'Add to Tasks',
-      taskText: 'Review evacuation commands',
+      taskText: 'Review patient care plans',
     };
 
     expect(isTaskActionSuggestion(payload)).toBe(true);
@@ -150,7 +150,7 @@ describe('chatCoach helpers', () => {
       kind: 'calendar',
       label: 'Add to Calendar',
       event: {
-        title: 'Cabin crew exam',
+        title: 'Nursing board exam',
         type: 'exam',
         date: '2099-07-04',
         time: '09:00',
@@ -166,18 +166,18 @@ describe('chatCoach helpers', () => {
     const task = buildTaskFromSuggestion({
       kind: 'task',
       label: 'Add to Tasks',
-      taskText: 'Review airport codes',
+      taskText: 'Review medical abbreviations',
     });
 
-    expect(task.text).toBe('Review airport codes');
+    expect(task.text).toBe('Review medical abbreviations');
     expect(task.completed).toBe(false);
   });
 
   it('creates structured helpers for action suggestions', () => {
-    expect(createSuggestedTaskAction('Review service sequence')).toEqual({
+    expect(createSuggestedTaskAction('Review nursing diagnosis')).toEqual({
       kind: 'task',
       label: 'Add to Tasks',
-      taskText: 'Review service sequence',
+      taskText: 'Review nursing diagnosis',
     });
 
     expect(
@@ -186,7 +186,7 @@ describe('chatCoach helpers', () => {
         type: 'exam',
         date: '2099-08-01',
         time: '14:00',
-        note: 'Terminal procedures',
+        note: 'Clinical procedures',
       })
     ).toEqual({
       kind: 'calendar',
@@ -196,7 +196,7 @@ describe('chatCoach helpers', () => {
         type: 'exam',
         date: '2099-08-01',
         time: '14:00',
-        note: 'Terminal procedures',
+        note: 'Clinical procedures',
       },
     });
   });
@@ -204,14 +204,14 @@ describe('chatCoach helpers', () => {
   it('extracts a task action line from a coach reply', () => {
     expect(
       extractSuggestedActionFromReply(
-        'Captain, lock in one next step.\nACTION_TASK: Review boarding commands'
+        'Nurse, lock in one next step.\nACTION_TASK: Review anatomy terms'
       )
     ).toEqual({
-      content: 'Captain, lock in one next step.',
+      content: 'Nurse, lock in one next step.',
       suggestedAction: {
         kind: 'task',
         label: 'Add to Tasks',
-        taskText: 'Review boarding commands',
+        taskText: 'Review anatomy terms',
       },
     });
   });

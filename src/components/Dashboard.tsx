@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Plane, Calendar, CheckCircle2, ChevronRight, BookOpen, Wallet, BookMarked, Activity, Focus, Play, Pause, RotateCcw, Bell, AlertCircle, Clock, Download, Upload, Settings, X, MessageCircle } from 'lucide-react';
 import { type ChangeEvent, useState, useEffect, useMemo, useRef } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { aviationFacts } from '../data';
+import { nursingFacts } from '../data';
 import { getTodayEvents, getUpcomingEvents, loadCalendarEvents, type CalendarEvent } from '../lib/calendar';
 
 export type ModuleId = 'dashboard' | 'subjects' | 'tasks' | 'exams' | 'languages' | 'finance' | 'diary' | 'calendar' | 'chat';
@@ -44,10 +44,10 @@ const TRANSLATIONS = {
     morning: "Good morning.",
     afternoon: "Good afternoon.",
     evening: "Good evening.",
-    subtitle: "Your flight path for today is clear. Ready for your next study session?",
+    subtitle: "Your clinical path for today is clear. Ready for your next study session?",
     focusMode: "Enter Focus Mode",
     settings: "Local Settings",
-    settingsDesc: "Manage your data locally. Flight Deck does not use cloud storage.",
+    settingsDesc: "Manage your data locally. Nurse's Station does not use cloud storage.",
     backup: "Backup Data",
     backupDesc: "Export all your modules data as JSON",
     restore: "Restore Data",
@@ -58,10 +58,10 @@ const TRANSLATIONS = {
     morning: "Magandang umaga.",
     afternoon: "Magandang hapon.",
     evening: "Magandang gabi.",
-    subtitle: "Ang iyong flight path para sa araw na ito ay malinaw. Handa na ba sa pag-aaral?",
+    subtitle: "Ang iyong clinical path para sa araw na ito ay malinaw. Handa na ba sa pag-aaral?",
     focusMode: "Focus Mode",
     settings: "Mga Setting",
-    settingsDesc: "Lokal na pamamahala ng data. Hindi gumagamit ng cloud ang Flight Deck.",
+    settingsDesc: "Lokal na pamamahala ng data. Hindi gumagamit ng cloud ang Nurse's Station.",
     backup: "I-backup ang Data",
     backupDesc: "I-export ang lahat ng data bilang JSON",
     restore: "I-restore ang Data",
@@ -72,10 +72,10 @@ const TRANSLATIONS = {
     morning: "Buenos días.",
     afternoon: "Buenas tardes.",
     evening: "Buenas noches.",
-    subtitle: "Tu ruta de vuelo para hoy está despejada. ¿Listo para estudiar?",
+    subtitle: "Tu ruta clínica para hoy está despejada. ¿Listo para estudiar?",
     focusMode: "Modo Enfoque",
     settings: "Ajustes Locales",
-    settingsDesc: "Gestiona tus datos localmente. Flight Deck no usa la nube.",
+    settingsDesc: "Gestiona tus datos localmente. Nurse's Station no usa la nube.",
     backup: "Copia de Seguridad",
     backupDesc: "Exportar todos los datos como JSON",
     restore: "Restaurar Datos",
@@ -241,10 +241,14 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   useEffect(() => {
     // Rotate fact every 8 seconds
     const interval = setInterval(() => {
-      setFactIndex((prev) => (prev + 1) % aviationFacts.length);
+      setFactIndex((prev) => (prev + 1) % nursingFacts.length);
     }, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleNextFact = () => {
+    setFactIndex((prev) => (prev + 1) % nursingFacts.length);
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -304,7 +308,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `flight-deck-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `nursing-station-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -533,7 +537,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </button>
         </motion.div>
 
-        {/* Fun Fact Widget */}
+        {/* Nursing Insight Widget */}
         <motion.div 
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
@@ -542,36 +546,35 @@ export function Dashboard({ onNavigate }: DashboardProps) {
            className="col-span-1 md:col-span-2 bg-neutral-50 border border-neutral-200 p-8 md:p-12 flex flex-col justify-between relative overflow-hidden group hover:border-black hover:shadow-lg transition-all duration-500"
         >
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none">
-            <Plane className="w-64 h-64 -mr-16 -mt-16 transform rotate-12" />
+            <Activity className="w-64 h-64 -mr-16 -mt-16 transform rotate-12" />
           </div>
           
           <div className="relative z-10 flex-1 flex flex-col justify-center min-h-[200px]">
-            <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 group-hover:text-black transition-colors duration-500 mb-8">Aviation Insight</h2>
-            
-            <div className="relative">
+            <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 group-hover:text-black transition-colors duration-500 mb-8">Nursing Insight</h2>
+            <div className="flex-1 flex flex-col justify-center">
               <AnimatePresence mode="wait">
                 <motion.p 
                   key={factIndex}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug tracking-tight max-w-2xl text-black"
+                  transition={{ duration: 0.3 }}
+                  className="text-lg md:text-2xl font-medium text-black leading-snug tracking-tight"
                 >
-                  "{aviationFacts[factIndex]}"
+                  "{nursingFacts[factIndex]}"
                 </motion.p>
               </AnimatePresence>
             </div>
           </div>
 
           <div className="relative z-10 mt-12 flex items-center gap-4">
-             <button 
-                onClick={() => setFactIndex((prev) => (prev + 1) % aviationFacts.length)}
-                className="w-10 h-10 rounded-full border border-neutral-300 flex items-center justify-center hover:bg-white hover:border-black hover:scale-105 transition-all duration-300"
-              >
-                <ChevronRight className="w-4 h-4 text-black" />
-             </button>
-             <span className="text-xs text-neutral-400 font-semibold tracking-widest uppercase">Next Fact</span>
+            <button 
+              onClick={handleNextFact}
+              className="w-10 h-10 rounded-full border border-neutral-300 flex items-center justify-center hover:bg-white hover:border-black hover:scale-105 transition-all duration-300"
+            >
+              <ChevronRight className="w-4 h-4 text-black" />
+            </button>
+            <span className="text-xs text-neutral-400 font-semibold tracking-widest uppercase">Next Fact</span>
           </div>
         </motion.div>
 
@@ -582,15 +585,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
            className="col-span-1 md:col-span-3 mt-8"
         >
-           <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 mb-8">Flight Plan / Modules</h2>
+           <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400 mb-8">Care Plan / Modules</h2>
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {[
-                { id: 'subjects', title: "Subjects", desc: "Tourism & Aviation", icon: BookOpen },
+                { id: 'subjects', title: "Subjects", desc: "Nursing & Healthcare", icon: BookOpen },
                 { id: 'tasks', title: "Daily Tasks", desc: "Checklist", icon: Calendar },
                 { id: 'exams', title: "Mock Exams", desc: "Quiz Generator", icon: BookMarked },
                 { id: 'calendar', title: "Calendar", desc: "Events & Notes", icon: Bell },
-                { id: 'finance', title: "Finance", desc: "Layover Budget", icon: Wallet },
-                { id: 'diary', title: "Diary", desc: "Personal Notes", icon: Plane },
+                { id: 'finance', title: "Finance", desc: "Clinical Rotation Budget", icon: Wallet },
+                { id: 'diary', title: "Diary", desc: "Personal Notes", icon: Activity },
                 { id: 'chat', title: "Study Coach", desc: "AI Briefing", icon: MessageCircle },
               ].map((item, idx) => (
                 <motion.div 

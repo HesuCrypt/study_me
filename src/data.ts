@@ -1,9 +1,10 @@
-export const aviationFacts = [
-  "The world's shortest commercial flight lasts just 57 seconds, traveling between two Scottish islands: Westray and Papa Westray.",
-  "Airplane food tastes different because our sense of taste and smell decreases by up to 30% during flights due to cabin pressure and dry air.",
-  "The white trails planes leave behind are called contrails, made of water vapor that condenses and freezes around engine exhaust.",
-  "The Boeing 747 has a wingspan of 211 feet, which is longer than the Wright brothers' first flight.",
-  "Commercial aircraft fly at around 35,000 feet because the air is thinner, meaning less resistance and better fuel efficiency.",
-  "The black box is actually painted bright orange so it can be easily found after an accident.",
-  "Flight attendants have secret communication codes. A single chime often means a passenger needs assistance or a seatbelt sign is on."
+export const nursingFacts = [
+  "Florence Nightingale, the founder of modern nursing, was known as 'The Lady with the Lamp' for her night rounds tending to wounded soldiers.",
+  "Nursing is consistently rated as one of the most trusted professions in the world due to its high ethical standards and patient care.",
+  "The first nursing school was established in India in 250 BC, and only men were allowed to attend at the time.",
+  "Nurses walk an average of 4-5 miles during a 12-hour shift, which is twice the amount the average person walks in a day.",
+  "The nursing cap, though rarely worn today, was originally designed to keep a nurse's hair neatly in place and symbolise service.",
+  "There are over 4 million registered nurses in the United States alone, making it one of the largest sectors in the healthcare workforce.",
+  "The word 'nurse' comes from the Latin word 'nutrire', which means to nourish, nurture, or protect."
 ];
+

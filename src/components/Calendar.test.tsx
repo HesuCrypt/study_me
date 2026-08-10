@@ -14,7 +14,7 @@ describe('Calendar page', () => {
     render(<Calendar onNavigate={() => {}} />);
 
     await user.click(screen.getByRole('button', { name: /add event/i }));
-    await user.type(screen.getByLabelText(/event title/i), 'Tourism exam');
+    await user.type(screen.getByLabelText(/event title/i), 'Nursing exam');
     await user.selectOptions(screen.getByLabelText(/event type/i), 'exam');
     await user.clear(screen.getByLabelText(/event date/i));
     await user.type(screen.getByLabelText(/event date/i), '2099-07-03');
@@ -24,7 +24,7 @@ describe('Calendar page', () => {
 
     await user.click(screen.getAllByRole('button', { name: /^add event$/i })[1]);
 
-    expect(screen.getAllByText('Tourism exam').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Nursing exam').length).toBeGreaterThan(0);
     expect(screen.getByText(/bring reviewer/i)).toBeInTheDocument();
     expect(screen.getByText(/2099-07-03 at 13:30/i)).toBeInTheDocument();
   });

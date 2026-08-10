@@ -182,7 +182,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
           className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          {view === 'list' ? 'Flight Deck' : 'Back to Exams'}
+          {view === 'list' ? "Nurse's Station" : 'Back to Exams'}
         </button>
         <div className="flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-neutral-400">
           <BookMarked className="w-4 h-4" />
@@ -275,7 +275,7 @@ export function ExamCreator({ onNavigate }: ExamCreatorProps) {
               type="text"
               value={generateTopic}
               onChange={(e) => setGenerateTopic(e.target.value)}
-              placeholder="e.g. Airport IATA Codes, Aviation Security..."
+              placeholder="e.g. Pharmacology, Pediatric Nursing, Anatomy..."
               className="w-full p-4 border border-neutral-200 focus:border-black outline-none bg-white text-black text-lg transition-colors"
               disabled={isGenerating}
             />

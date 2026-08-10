@@ -60,7 +60,7 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
               className="inline-flex items-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-black"
             >
               <ArrowLeft className="h-4 w-4" />
-              Flight Deck
+              Nurse's Station
             </button>
           </div>
 
@@ -120,7 +120,7 @@ export function ChatDashboard({ onNavigate, currentModule, controller }: ChatDas
                     className="inline-flex items-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-black"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Flight Deck
+                    Nurse's Station
                   </button>
                   <button
                     type="button"

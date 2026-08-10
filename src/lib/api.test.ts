@@ -3,7 +3,7 @@ import { buildApiUrl, parseApiJson } from './api';
 
 describe('api url helper', () => {
   it('keeps relative api paths when no base url is provided', () => {
-    expect(buildApiUrl('/api/generate-exam')).toBe('/api/generate-exam');
+    expect(buildApiUrl('/api/generate-exam', '')).toBe('/api/generate-exam');
   });
 
   it('prefixes api paths with a configured base url', () => {

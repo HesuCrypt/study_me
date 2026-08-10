@@ -20,8 +20,8 @@ interface FinanceProps {
 }
 
 const CATEGORIES = {
-  income: ['Per Diem / Allowance', 'Salary', 'Other Income'],
-  expense: ['Meals', 'Transport', 'Shopping', 'Accommodation', 'Entertainment', 'Other Expense']
+  income: ['Allowance / Stipend', 'Salary', 'Other Income'],
+  expense: ['Clinical Supplies', 'Meals', 'Transport', 'Tuition', 'Scrubs / Gear', 'Books / Reviewers', 'Other Expense']
 };
 
 const CHART_COLORS = ['#000000', '#333333', '#666666', '#999999', '#CCCCCC', '#EEEEEE'];
@@ -101,11 +101,11 @@ export function Finance({ onNavigate }: FinanceProps) {
           className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Flight Deck
+          Nurse's Station
         </button>
         <div className="flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-neutral-400">
           <Wallet className="w-4 h-4" />
-          Layover Ledger
+          Clinical Ledger
         </div>
       </motion.div>
 
@@ -117,7 +117,7 @@ export function Finance({ onNavigate }: FinanceProps) {
         <div className="flex justify-between items-end mb-12">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Finance</h1>
-            <p className="text-neutral-500">Track your layover allowances and daily expenses.</p>
+            <p className="text-neutral-500">Track your clinical rotation allowances and daily expenses.</p>
           </div>
           <button 
             onClick={() => setIsAdding(!isAdding)}

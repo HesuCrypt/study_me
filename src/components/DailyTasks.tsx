@@ -17,9 +17,9 @@ export function DailyTasks({ onNavigate }: DailyTasksProps) {
   const [tasks, setTasks] = useState<Task[]>(() => {
     const saved = localStorage.getItem('study-me-tasks');
     return saved ? JSON.parse(saved) : [
-      { id: '1', text: 'Review Aviation Code Alpha-Echo', completed: false },
-      { id: '2', text: 'Memorize Airport IATA codes', completed: false },
-      { id: '3', text: 'Read Chapter 4 of Tourism Marketing', completed: false }
+      { id: '1', text: 'Review Cardiovascular System Care Plan', completed: false },
+      { id: '2', text: 'Memorize Common Medication Dosages', completed: false },
+      { id: '3', text: 'Read Chapter 4 of Medical-Surgical Nursing', completed: false }
     ];
   });
   
@@ -66,7 +66,7 @@ export function DailyTasks({ onNavigate }: DailyTasksProps) {
           className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Flight Deck
+          Nurse's Station
         </button>
         <div className="flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-neutral-400">
           <CalendarIcon className="w-4 h-4" />

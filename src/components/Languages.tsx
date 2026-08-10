@@ -144,7 +144,7 @@ export function Languages({ onNavigate }: LanguagesProps) {
           className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          {view === 'list' ? 'Flight Deck' : 'Back to Decks'}
+          {view === 'list' ? "Nurse's Station" : 'Back to Decks'}
         </button>
         <div className="flex items-center gap-2 text-sm font-semibold tracking-wider uppercase text-neutral-400">
           <Globe className="w-4 h-4" />
