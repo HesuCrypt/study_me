@@ -26,7 +26,7 @@ async function startServer() {
         return res.status(400).json({ error: "Topic is required" });
       }
 
-      const prompt = `Generate a mock exam about "${topic}" for a tourism student or flight attendant. 
+      const prompt = `Generate a mock exam about "${topic}" for a nursing student. 
       The difficulty level of the questions should be: ${difficulty}.
       It should contain exactly ${questionCount} questions.
       Return the output as a strict JSON object with this structure, and do not include markdown formatting like \`\`\`json:
