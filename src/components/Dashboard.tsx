@@ -392,6 +392,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 relative">
+      <div className="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6 text-center">
+        <h1 className="text-2xl md:text-4xl font-bold">
+          This website will now be unusable. Good luck with your journey.
+        </h1>
+      </div>
       <motion.header 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
